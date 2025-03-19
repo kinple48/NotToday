@@ -26,4 +26,37 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+public:
+	UPROPERTY(VisibleAnywhere)
+	class UCameraComponent* VRCamera;
+
+	UPROPERTY(EditDefaultsOnly, Category =Input)
+	class UInputMappingContext* IMC_Player;
+
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	class UInputAction* IA_Move;
+	FVector Direction;
+	void Move(const struct FInputActionValue& InputValue);
+
+public:
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	class UInputAction* IA_Mouse;
+
+	void Turn(const struct FInputActionValue& InputValue);
+
+public:
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	class UInputAction* IA_GunShot;
+	bool bGunShot = false;
+	void GunShotStart(const struct FInputActionValue& InputValue);
+	void GunShotEnd(const struct FInputActionValue& InputValue);
+	void GunShot();
+	float CurrentTime = 0.5f;
+	float MakeTime = 0.5f;
+
+	UPROPERTY(EditAnywhere, Category = BulletEffact)
+	class UParticleSystem* BulletEffactFactory;
+
+	UPROPERTY()
+	class USoundBase* BulletSound;
 };
