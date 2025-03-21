@@ -74,3 +74,5 @@ Plugins/**/Intermediate/*
 DerivedDataCache/*
 Content/Survival_Character/Textures/BackPack/T_Backpack_Normal.uasset
 Content/Survival_Character/Textures/Jacket/T_Jacket_Normal.uasset
+.idea/
+NotToday.sln.DotSettings.user
