@@ -59,4 +59,30 @@ public:
 
 	UPROPERTY()
 	class USoundBase* BulletSound;
+
+	float state = 0;
+
+	UPROPERTY()
+	class ASpawnPoint* Spawnpoint;
+
+	UPROPERTY()
+	class ASpawnPoint* Tmp_Spawnpoint;
+
+	//void setspawnpoint_begin();
+	//void setspawnpoint_end();
+
+	UFUNCTION()
+	void OnSpawnPointBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	UFUNCTION()
+	void OnSpawnPointEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UPROPERTY()
+    TMap<int32, AActor*> OverlapMap;
+
+	
+	int32 CalculateSlotIndex(AActor* Actor);
+
+	AActor* FindClosestActorToPlayer();
+
 };
