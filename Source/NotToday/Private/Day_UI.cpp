@@ -3,6 +3,7 @@
 
 #include "Day_UI.h"
 #include "Components/Button.h"
+#include "MainPlayer.h"
 
 void UDay_UI::NativeConstruct()
 {
@@ -13,10 +14,15 @@ void UDay_UI::NativeConstruct()
 
 void UDay_UI::Place()
 {
-
+	player = Cast<AMainPlayer>( GetWorld()->GetFirstPlayerController()->GetPawn() );
+	if (player)
+	{
+		GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "success" ) );
+		player->SpawnObject();
+	}
 }
 
 void UDay_UI::Buy()
 {
-
+	GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "Buy" ) );
 }

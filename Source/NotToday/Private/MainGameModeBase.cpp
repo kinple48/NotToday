@@ -17,6 +17,13 @@ void AMainGameModeBase::BeginPlay()
 			PrintStore();
 			PrintCash();
 			PrintPrice();
+
+			auto* pc = GetWorld()->GetFirstPlayerController();
+			if (pc)
+			{
+				pc->SetShowMouseCursor( true );
+				pc->SetInputMode( FInputModeGameAndUI() );
+			}
 		}
 
 	}

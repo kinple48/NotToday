@@ -30,19 +30,21 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	class UCameraComponent* VRCamera;
 
+	UPROPERTY(VisibleAnywhere)
+	class USpringArmComponent* SpringArmComp;
+
 	UPROPERTY(EditDefaultsOnly, Category =Input)
 	class UInputMappingContext* IMC_Player;
 
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	class UInputAction* IA_Move;
 	FVector Direction;
+	FVector Direction_Mouse;
 	void Move(const struct FInputActionValue& InputValue);
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	class UInputAction* IA_Mouse;
-
-	void Turn(const struct FInputActionValue& InputValue);
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = Input)
@@ -61,15 +63,13 @@ public:
 	class USoundBase* BulletSound;
 
 	float state = 0;
+	float walkspeed = 600.f;
 
 	UPROPERTY()
 	class ASpawnPoint* Spawnpoint;
 
 	UPROPERTY()
 	class ASpawnPoint* Tmp_Spawnpoint;
-
-	//void setspawnpoint_begin();
-	//void setspawnpoint_end();
 
 	UFUNCTION()
 	void OnSpawnPointBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -79,10 +79,16 @@ public:
 
 	UPROPERTY()
     TMap<int32, AActor*> OverlapMap;
-
 	
 	int32 CalculateSlotIndex(AActor* Actor);
 
 	AActor* FindClosestActorToPlayer();
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ABarricade> BarricadeFactory;
+
+	void RotateToMouseCursor();
+	void SpawnObject();
+
 
 };

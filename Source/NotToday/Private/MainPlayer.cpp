@@ -12,14 +12,26 @@
 #include "Kismet/GameplayStatics.h"
 #include "SpawnPoint.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Barricade.h"
 
 // Sets default values
 AMainPlayer::AMainPlayer()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	VRCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("VRCamera"));
-	VRCamera->SetupAttachment(RootComponent);
+
+	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>( TEXT( "SpringArmComp" ) );
+	SpringArmComp->SetupAttachment( RootComponent );
+	SpringArmComp->bUsePawnControlRotation = false;
+
+	VRCamera = CreateDefaultSubobject<UCameraComponent>( TEXT( "VRCamera" ) );
+	VRCamera->SetupAttachment( SpringArmComp );
+	VRCamera->bUsePawnControlRotation = false;
+
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
 
 	// IMC 설정
 	ConstructorHelpers::FObjectFinder<UInputMappingContext>TempIMC(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/LJW/Input/IMC_Player.IMC_Player'"));
@@ -56,6 +68,7 @@ AMainPlayer::AMainPlayer()
 	{
 		BulletSound = TempSound.Object;
 	}
+
 }
 
 // Called when the game starts or when spawned
@@ -70,7 +83,7 @@ void AMainPlayer::BeginPlay()
 void AMainPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+	//RotateToMouseCursor();
 	if (bGunShot)
 	{
 		if (CurrentTime >= MakeTime)
@@ -81,6 +94,11 @@ void AMainPlayer::Tick(float DeltaTime)
 		CurrentTime += DeltaTime;
 		
 	}
+	Direction = FTransform( GetControlRotation() ).TransformVector( Direction );
+	// Direction 초기화 (다음 Tick에서 입력이 없으면 멈춤)
+
+	AddMovementInput( Direction );
+	Direction = FVector::ZeroVector;
 }
 
 // Called to bind functionality to input
@@ -103,7 +121,6 @@ void AMainPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	if (InputSystem)
 	{
 		InputSystem->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AMainPlayer::Move);
-		InputSystem->BindAction(IA_Mouse, ETriggerEvent::Triggered, this, &AMainPlayer::Turn);
 		InputSystem->BindAction(IA_GunShot, ETriggerEvent::Started, this, &AMainPlayer::GunShotStart);
 		InputSystem->BindAction(IA_GunShot, ETriggerEvent::Completed, this, &AMainPlayer::GunShotEnd);
 	}
@@ -112,16 +129,9 @@ void AMainPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 void AMainPlayer::Move(const struct FInputActionValue& InputValue)
 {
 	FVector2D value = InputValue.Get<FVector2D>();
-	Direction = VRCamera->GetForwardVector() * value.X + VRCamera->GetRightVector() * value.Y;
 
-	AddMovementInput(Direction);
-}
-
-void AMainPlayer::Turn(const struct FInputActionValue& InputValue)
-{
-	FVector2D Scale = InputValue.Get<FVector2D>();
-	AddControllerPitchInput(Scale.Y);
-	AddControllerYawInput(Scale.X);
+	Direction.X = value.X;
+	Direction.Y = value.Y;
 }
 
 void AMainPlayer::GunShotStart(const struct FInputActionValue& InputValue)
@@ -169,12 +179,8 @@ void AMainPlayer::OnSpawnPointBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	int32 SlotIndex = CalculateSlotIndex(OtherActor); // 칸 번호 계산 로직
 	OverlapMap.Add(SlotIndex, OtherActor); // 해당 칸에 객체 추가
 	Spawnpoint = Cast<ASpawnPoint>( FindClosestActorToPlayer() );
-	/*Tmp_Spawnpoint = Spawnpoint;
-	Spawnpoint->meshcomp->SetVisibility( true );
-	Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f ) );
-	Spawnpoint->meshcomp->SetWorldRotation( FRotator( 0.f , 90.f , 0.f ) );*/
 
-	if (Spawnpoint && Spawnpoint->meshcomp)
+	if (Spawnpoint && Spawnpoint->meshcomp && !Spawnpoint->SpawnState)
 	{
 		Spawnpoint->meshcomp->SetVisibility( true );
 		Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f ) );
@@ -249,4 +255,47 @@ AActor* AMainPlayer::FindClosestActorToPlayer()
 	}
 
 	return ClosestActor; // 가장 가까운 액터 반환, 없으면 nullptr
+}
+
+void AMainPlayer::RotateToMouseCursor()
+{
+	APlayerController* PlayerController = Cast<APlayerController>( GetController() );
+	if (PlayerController)
+	{
+		FHitResult HitResult;
+
+		// 마우스 포인터가 가리키는 위치를 가져오기
+		if (PlayerController->GetHitResultUnderCursor( ECC_Visibility , false , HitResult ))
+		{
+			FVector MouseLocation = HitResult.Location;  // 마우스가 가리키는 월드 좌표
+			FVector CharacterLocation = GetActorLocation();
+
+			// 캐릭터와 마우스 위치 간의 방향 벡터 계산 (2D 평면에서만)
+			FVector LookAtDirection = (MouseLocation - CharacterLocation).GetSafeNormal2D();
+
+			// LookAtDirection을 기반으로 Yaw 값 계산
+			float TargetYaw = FMath::Atan2( LookAtDirection.Y , LookAtDirection.X ) * 180.0f / PI;
+
+			// 현재 캐릭터 회전값 가져오기
+			FRotator CurrentRotation = GetActorRotation();
+
+			// Z축(Yaw)만 변경하고 X(Pitch)와 Y(Roll)는 유지
+			CurrentRotation.Yaw = TargetYaw;
+
+			// 캐릭터 회전 적용
+			SetActorRotation( CurrentRotation );
+		}
+	}
+}
+
+void AMainPlayer::SpawnObject()
+{
+	if (Spawnpoint)
+	{
+		Spawnpoint->SpawnState = true;
+		FVector ActorLocation = Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f );
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation( ActorLocation );
+		ABarricade* Barricade = GetWorld()->SpawnActor<ABarricade>( BarricadeFactory , SpawnTransform );
+	}
 }

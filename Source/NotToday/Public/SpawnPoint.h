@@ -32,12 +32,6 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UStaticMeshComponent* meshcomp;
 
-	/*UFUNCTION()
-	void OnPlayerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void OnPlayerEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);*/
-
 	class AMainPlayer* player;
-	bool state = false;
+	bool SpawnState = false;
 };

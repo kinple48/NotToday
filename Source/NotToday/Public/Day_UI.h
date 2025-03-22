@@ -57,4 +57,5 @@ public:
 	UFUNCTION()
 	void Buy();
 
+	class AMainPlayer* player;
 };

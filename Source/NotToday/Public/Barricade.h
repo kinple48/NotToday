@@ -26,4 +26,9 @@ public:
 public:
 	int32 price = 200;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class UBoxComponent* boxcomp;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	class UStaticMeshComponent* meshcomp;
 };
