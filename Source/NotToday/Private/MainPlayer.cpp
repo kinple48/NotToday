@@ -14,12 +14,23 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Barricade.h"
+#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 AMainPlayer::AMainPlayer()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	GunMesh = CreateDefaultSubobject<USkeletalMeshComponent>( TEXT( "GunMesh" ));
+	GunMesh->SetupAttachment( GetMesh() , TEXT( "RightHandSocket" ) );
+
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> TempGun( TEXT( "/Script/Engine.SkeletalMesh'/Game/LJW/Asset/BLK18/SKM_BLK18.SKM_BLK18'" ) );
+	if (TempGun.Succeeded())
+	{
+		GunMesh->SetSkeletalMesh( TempGun.Object );
+		GunMesh->SetRelativeLocationAndRotation( FVector(-135.f, 0.f, 725.f ) , FRotator( 80.f, 85.f, 270.f ) );
+	}
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>( TEXT( "SpringArmComp" ) );
 	SpringArmComp->SetupAttachment( RootComponent );
@@ -83,7 +94,7 @@ void AMainPlayer::BeginPlay()
 void AMainPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	//RotateToMouseCursor();
+	RotateToMouseCursor();
 	if (bGunShot)
 	{
 		if (CurrentTime >= MakeTime)
@@ -147,9 +158,29 @@ void AMainPlayer::GunShotEnd(const struct FInputActionValue& InputValue)
 
 void AMainPlayer::GunShot()
 {
+	RotateToMouseCursor();
 	GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Red, TEXT("gunshot"));
-	FVector StartPoint = VRCamera->GetComponentLocation();
-	FVector EndPoint = StartPoint + VRCamera->GetForwardVector() * 1000;
+	FVector StartPoint = GunMesh->GetComponentLocation();
+	FVector ForwardVector;
+	APlayerController* PlayerController = Cast<APlayerController>( GetController() );
+	if (PlayerController)
+	{
+		FHitResult HitResult;
+
+		// 마우스 포인터가 가리키는 위치를 가져오기
+		if (PlayerController->GetHitResultUnderCursor( ECC_Visibility , false , HitResult ))
+		{
+			FVector MouseLocation = HitResult.Location;
+			FVector TargetLocation = GunMesh->GetComponentLocation();
+			FVector LookAtDirection = (MouseLocation - TargetLocation).GetSafeNormal2D();
+			float TargetYaw = FMath::Atan2( LookAtDirection.Y , LookAtDirection.X ) * 180.0f / PI;
+			FRotator CurrentRotation = GetActorRotation();
+			CurrentRotation.Yaw = TargetYaw;
+			ForwardVector = CurrentRotation.Vector(); // Forward 방향 벡터 생성
+		}
+	}
+
+	FVector EndPoint = StartPoint + ForwardVector * 700;
 
 	FHitResult hitInfo;
 	FCollisionQueryParams params;
@@ -171,7 +202,7 @@ void AMainPlayer::GunShot()
 	}
 
 	// 선그리기
-	DrawDebugLine(GetWorld(), StartPoint, EndPoint, FColor::Red, false, -1, 0, 1);
+	DrawDebugLine(GetWorld(), StartPoint, EndPoint, FColor::White, false, 1, 0, 1);
 }
 
 void AMainPlayer::OnSpawnPointBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

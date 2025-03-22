@@ -90,5 +90,6 @@ public:
 	void RotateToMouseCursor();
 	void SpawnObject();
 
-
+	UPROPERTY(EditDefaultsOnly)
+	class USkeletalMeshComponent* GunMesh;
 };
