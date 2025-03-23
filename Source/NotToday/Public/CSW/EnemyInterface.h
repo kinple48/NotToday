@@ -18,6 +18,6 @@ class NOTTODAY_API IEnemyInterface
 	GENERATED_BODY()
 
 public:
-	virtual void SetAttackTarget(AActor* InTarget) = 0;
-	virtual AActor* GetTarget() const = 0;
+	virtual void SetTarget(TObjectPtr<AActor> InTarget) = 0;
+	virtual TObjectPtr<AActor> GetTarget() const = 0;
 };

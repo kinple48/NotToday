@@ -24,7 +24,10 @@ public:
 	TObjectPtr<USkeletalMesh> SkeletalMesh;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Anim")
-	TSubclassOf<UAnimInstance> Anim;
+	TObjectPtr<UAnimBlueprint> AnimBP;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Anim")
+	TObjectPtr<UAnimMontage> Montage;
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
 	FTransform MeshOffsetTransform;
@@ -44,9 +47,5 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
 	float AttackRange; // 사거리
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Anim")
-	TObjectPtr<UAnimMontage> AttackMontage;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Anim")
-	TObjectPtr<UAnimMontage> DieMontage;
 }; 

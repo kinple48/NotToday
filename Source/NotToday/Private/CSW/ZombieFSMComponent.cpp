@@ -1,0 +1,220 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "CSW/ZombieFSMComponent.h"
+
+#include "AIController.h"
+#include "AITypes.h"
+#include "Barricade.h"
+#include "MainPlayer.h"
+#include "NavigationSystem.h"
+#include "Components/CapsuleComponent.h"
+#include "CSW/ZombieAnim.h"
+#include "CSW/ZombieBase.h"
+#include "Kismet/GameplayStatics.h"
+
+UZombieFSMComponent::UZombieFSMComponent()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+}
+
+void UZombieFSMComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	auto mainPlayer = UGameplayStatics::GetActorOfClass(GetWorld(), AMainPlayer::StaticClass());
+	Player = Cast<AMainPlayer>(mainPlayer);
+
+	HP = MaxHP;
+	SetState(EZombieState::Move);
+	Target = Player;
+}
+
+void UZombieFSMComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	ElapsedTime += DeltaTime;
+	switch (State)
+	{
+		//case EZombieState::Idle: { IdleTick(); } break;
+		case EZombieState::Move: { MoveTick(); } break;
+		case EZombieState::Attack: { AttackTick(); } break;
+		//case EZombieState::Damage: { DamageTick(); } break;
+		case EZombieState::Die: { DieTick(); } break;
+	}
+	//GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Cyan, FString::Printf(TEXT("%f"), DistToTarget));
+
+}
+
+
+void UZombieFSMComponent::SetTarget(TObjectPtr<AActor> InTarget)
+{
+	Target = InTarget;
+}
+
+TObjectPtr<AActor> UZombieFSMComponent::GetTarget() const
+{
+	return Target;
+}
+
+void UZombieFSMComponent::SetState(EZombieState InState)
+{
+	FString StateName = UEnum::GetValueAsString(InState);
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, StateName);
+	State = InState;
+}
+
+
+// void UZombieFSMComponent::IdleTick()
+// {
+// 	// 타겟 재설정
+// 	
+// }
+
+void UZombieFSMComponent::MoveTick()
+{
+	DistToPlayer = FVector::Distance(Player->GetActorLocation(), Me->GetActorLocation());
+
+	if (DistToPlayer <= ChaseRange) // 플레이어가 추적가능 거리 이내면, 
+	{
+		// 플레이어 타겟팅이 가능한지 확인해봐야한다!
+		// 플레이어까지 길찾기
+		FVector PlayerLocation = Player->GetActorLocation();
+		
+		auto NS = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+		FAIMoveRequest Request;
+		Request.SetAcceptanceRadius(3);
+		Request.SetGoalLocation(PlayerLocation);
+		
+		// 쿼리 생성
+		FPathFindingQuery Query;
+		AIController->BuildPathfindingQuery(Request, Query);
+
+		// 길찾기 결과
+		FPathFindingResult findingResult = NS->FindPathSync(Query);
+		if (findingResult.Result == ENavigationQueryResult::Success) // 플레이어 위치까지 길찾기 성공
+		{
+			Target = Player;
+			AIController->MoveToLocation(Target->GetActorLocation());
+		}
+		else // 길찾기 실패 (길이 막힘)
+		{
+			// 가까운 바리케이드 타겟팅
+			if (Barricades.Num() > 0)
+			{
+				TObjectPtr<ABarricade> Closest = FindClosestBarricade();
+				//Request.SetAcceptanceRadius(3);
+				//Request.SetGoalLocation(Closest->GetActorLocation());
+				//AIController->BuildPathfindingQuery(Request, Query);
+				//findingResult = NS->FindPathSync(Query);
+				//if (findingResult.Result == ENavigationQueryResult::Success)
+				//{
+				// 플레이어 위치까지 길찾기 성공
+				Target = Closest;
+				AIController->MoveToLocation(Target->GetActorLocation());
+				//}
+			}
+			else
+			{
+				// 바리케이드가 없는데도 플레이어한테 못간다잉??
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "No Barricade, But Cannot go to Player..?!?!?");
+			}
+		}
+		
+		DistToTarget = FVector::Distance(Target->GetActorLocation(), Me->GetActorLocation());
+		if (DistToTarget <= AttackRange) // 타겟이 공격가능 거리 이내
+		{
+			SetState(EZombieState::Attack);
+			ElapsedTime = AttackDelayTime; // 바로 공격 시작
+			
+		}
+	}
+	else // 플레이어 추적가능 거리 벗어남 -> 플레이어 타겟팅 가능 확인 X
+	{
+		if (Barricades.Num() > 0) // 맵에 바리케이드 있으면
+		{
+			Target = FindClosestBarricade();
+			AIController->MoveToLocation(Target->GetActorLocation());
+		}
+		else
+		{
+			Target = Player;
+			AIController->MoveToLocation(Target->GetActorLocation());
+		}
+	}
+}
+
+void UZombieFSMComponent::AttackTick()
+{
+	if (ElapsedTime >= AttackDelayTime)
+	{
+		// 공격!
+		ElapsedTime = 0.f;
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Magenta, FString("Attack"));
+		Me->PlayAnimMontage(Anim->ZombieMontage, 1.f, TEXT("Attack"));
+		AIController->StopMovement();
+		bAttackPlaying = true;
+	}
+	else
+	{
+		DistToTarget = FVector::Distance(Target->GetActorLocation(), Me->GetActorLocation());
+		if (DistToTarget > AttackRange && !bAttackPlaying) // 공격범위 벗어남 && 공격중이 아님
+		{
+			SetState(EZombieState::Move);
+		}
+	}
+}
+
+// void UZombieFSMComponent::DamageTick()
+// {
+// }
+
+void UZombieFSMComponent::DieTick()
+{
+	if (ElapsedTime >= DieDestoryTime)
+	{
+		Me->Destroy();
+	}
+}
+
+
+void UZombieFSMComponent::OnDamage(int32 damage)
+{
+	HP -= damage;
+
+	if (HP > 0)
+	{
+		// 피격
+		Me->PlayAnimMontage(Anim->ZombieMontage, 3.0f, TEXT("Damage"));
+	}
+	else
+	{
+		// 사망
+		SetState(EZombieState::Die);
+		Me->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Me->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Me->PlayAnimMontage(Anim->ZombieMontage, 1.3f, TEXT("Die"));
+		AIController->StopMovement();
+	}
+}
+
+
+TObjectPtr<ABarricade> UZombieFSMComponent::FindClosestBarricade()
+{
+	float MinDistance = FLT_MAX; // float 최대값
+	TObjectPtr<ABarricade> Closest;
+	for (TObjectPtr<ABarricade> Barricade : Barricades)
+	{
+		FVector v1 = Me->GetActorLocation();
+		FVector v2 = Barricade->GetActorLocation();
+		
+		float dist = FMath::Sqrt(FMath::Square(v1.X-v2.X) + FMath::Square(v1.Y-v2.Y));
+		if (dist < MinDistance)
+		{
+			MinDistance = dist;
+			Closest = Barricade;
+		}
+	}
+	return Closest;
+}
