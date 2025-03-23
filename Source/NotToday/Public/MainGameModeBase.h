@@ -22,11 +22,24 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class UUserWidget> DayWidget;
 
-	class UDay_UI* Day_UI;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UUserWidget> NightWidget;
 
-	int32 CurrentScore = 0;
+
+	class AMainPlayer* player;
+	class UDay_UI* Day_UI;
+	class UNight_UI* Night_UI;
 
 	void PrintStore();
 	void PrintCash();
+	void PrintScore();
 	void PrintPrice();
+	void PrintPlace();
+	void PrintRemove();
+	void PrintElse();
+	void ChangeUI();
+	
+	// 체력 시스템
+	void SetHP( float Cur , float Max );
+	void SetReload( float Cur , float Max );
 };

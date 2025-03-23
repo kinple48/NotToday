@@ -33,5 +33,7 @@ public:
 	class UStaticMeshComponent* meshcomp;
 
 	class AMainPlayer* player;
-	bool SpawnState = false;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	bool spawnstate = false;
 };

@@ -33,13 +33,21 @@ ABarricade::ABarricade()
 void ABarricade::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	HP = HPMax;
 }
 
 // Called every frame
 void ABarricade::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (HP <= 0)
+	{
+		this->Destroy();
+	}
+}
 
+void ABarricade::SetDamage( int32 damage )
+{
+	HP -= damage;
 }
 
