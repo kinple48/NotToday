@@ -15,8 +15,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Barricade.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "MainGameModeBase.h"
 
-// Sets default values
 AMainPlayer::AMainPlayer()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -82,29 +82,32 @@ AMainPlayer::AMainPlayer()
 
 }
 
-// Called when the game starts or when spawned
 void AMainPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMainPlayer::OnSpawnPointBeginOverlap);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AMainPlayer::OnSpawnPointEndOverlap);
+	GameMode = Cast<AMainGameModeBase>( UGameplayStatics::GetGameMode( GetWorld() ) );
 }
 
-// Called every frame
 void AMainPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	RotateToMouseCursor();
-	if (bGunShot)
+	if (CombatState)
 	{
-		if (CurrentTime >= MakeTime)
+		RotateToMouseCursor();
+		if (bGunShot)
 		{
-			GunShot();
-			CurrentTime = 0.f;
-		}
-		CurrentTime += DeltaTime;
+			if (CurrentTime >= MakeTime)
+			{
+				GunShot();
+				CurrentTime = 0.f;
+			}
+			CurrentTime += DeltaTime;
 		
+		}
 	}
+
 	Direction = FTransform( GetControlRotation() ).TransformVector( Direction );
 	// Direction 초기화 (다음 Tick에서 입력이 없으면 멈춤)
 
@@ -112,7 +115,6 @@ void AMainPlayer::Tick(float DeltaTime)
 	Direction = FVector::ZeroVector;
 }
 
-// Called to bind functionality to input
 void AMainPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -207,42 +209,87 @@ void AMainPlayer::GunShot()
 
 void AMainPlayer::OnSpawnPointBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	int32 SlotIndex = CalculateSlotIndex(OtherActor); // 칸 번호 계산 로직
-	OverlapMap.Add(SlotIndex, OtherActor); // 해당 칸에 객체 추가
-	Spawnpoint = Cast<ASpawnPoint>( FindClosestActorToPlayer() );
-
-	if (Spawnpoint && Spawnpoint->meshcomp && !Spawnpoint->SpawnState)
+	if (OtherActor->ActorHasTag( TEXT( "Object" ) ))
 	{
-		Spawnpoint->meshcomp->SetVisibility( true );
-		Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f ) );
-		Spawnpoint->meshcomp->SetWorldRotation( FRotator( 0.f , 90.f , 0.f ) );
-		Tmp_Spawnpoint = Spawnpoint;
+		GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "Can't Spawn" ) );
+		GameMode->PrintRemove();
+		BarricadeObject = Cast<ABarricade>( OtherActor );
+	}
+	else if (OtherActor->ActorHasTag( TEXT("SpawnPoint")))
+	{
+		Spawnpoint = Cast<ASpawnPoint>( OtherActor );
+		if (Tmp_Spawnpoint)
+		{
+			int32 Tmp_SlotIndex = CalculateSlotIndex( Tmp_Spawnpoint );
+			OverlapMap.Remove( Tmp_SlotIndex );
+			Tmp_Spawnpoint->meshcomp->SetVisibility( false );
+
+			int32 SlotIndex = CalculateSlotIndex( Spawnpoint ); // 칸 번호 계산 로직
+			OverlapMap.Add( SlotIndex , Spawnpoint ); // 해당 칸에 객체 추가
+			Spawnpoint = Cast<ASpawnPoint>( FindClosestActorToPlayer() );
+
+			if (Spawnpoint && !Spawnpoint->spawnstate)
+			{
+				if (BarricadeStoreData > 0)
+				{
+					GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "spawnable" ) );
+					GameMode->PrintPlace();
+					Spawnpoint->meshcomp->SetVisibility( true );
+					Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f ) );
+					Spawnpoint->meshcomp->SetWorldRotation( FRotator( 0.f , 90.f , 0.f ) );
+					Tmp_Spawnpoint = Spawnpoint;
+				}
+				else
+				{
+					GameMode->PrintElse();
+				}
+			}
+		}
+		else {
+			OverlapEvent(Spawnpoint,this);
+		}
 	}
 }
 
 void AMainPlayer::OnSpawnPointEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	int32 SlotIndex = CalculateSlotIndex(OtherActor); // 칸 번호 계산 로직
-	OverlapMap.Remove(SlotIndex); // 해당 칸에서 객체 제거
-
-	if (OtherActor == Spawnpoint)
+	if (OtherActor->ActorHasTag( TEXT( "SpawnPoint" ) ))
 	{
-		if (Spawnpoint && Spawnpoint->meshcomp)
+		Spawnpoint = Cast<ASpawnPoint>( OtherActor );
+		int32 SlotIndex = CalculateSlotIndex(Spawnpoint);
+		OverlapMap.Remove( SlotIndex );
+		if (Spawnpoint)
 		{
 			Spawnpoint->meshcomp->SetVisibility( false );
 		}
+
+		// 새로운 Spawnpoint 찾기
 		Spawnpoint = Cast<ASpawnPoint>( FindClosestActorToPlayer() );
-		if (Spawnpoint && Spawnpoint->meshcomp)
+		
+		if (Spawnpoint && !Spawnpoint->spawnstate)
 		{
-			Spawnpoint->meshcomp->SetVisibility( true );
-			Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f ) );
-			Spawnpoint->meshcomp->SetWorldRotation( FRotator( 0.f , 90.f , 0.f ) );
-			Tmp_Spawnpoint = Spawnpoint;
+			if (BarricadeStoreData > 0)
+			{
+				//GameMode->PrintPlace();
+				Spawnpoint->meshcomp->SetVisibility( true );
+				Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f ) );
+				Spawnpoint->meshcomp->SetWorldRotation( FRotator( 0.f , 90.f , 0.f ) );
+				Tmp_Spawnpoint = Spawnpoint;
+			}
+			else
+			{
+				//GameMode->PrintElse();
+			}
 		}
 	}
+	/*else if (OtherActor->ActorHasTag( TEXT( "Object" ) ))
+	{
+			GameMode->PrintElse();
+	}*/
 }
 
-int32 AMainPlayer::CalculateSlotIndex(AActor* Actor)
+
+int32 AMainPlayer::CalculateSlotIndex(ASpawnPoint* Actor)
 {
 	FVector Location = Actor->GetActorLocation();
 	int32 XIndex = FMath::FloorToInt( Location.X / 100.f );
@@ -278,16 +325,55 @@ AActor* AMainPlayer::FindClosestActorToPlayer()
 		{
 			MinDistance = Distance;
 			ClosestActor = CurrentActor;
-			if (Tmp_Spawnpoint != nullptr)
+			/*if (Tmp_Spawnpoint != nullptr)
 			{
-				Tmp_Spawnpoint->meshcomp->SetVisibility(false);
-			}
+				Tmp_Spawnpoint->meshcomp->SetVisibility( false );
+			}*/
 		}
 	}
 
 	return ClosestActor; // 가장 가까운 액터 반환, 없으면 nullptr
 }
 
+void AMainPlayer::OverlapEvent( ASpawnPoint* spawnpoint, AMainPlayer* player )
+{
+	int32 SlotIndex = CalculateSlotIndex( spawnpoint ); // 칸 번호 계산 로직
+	OverlapMap.Add( SlotIndex , spawnpoint ); // 해당 칸에 객체 추가
+	Spawnpoint = Cast<ASpawnPoint>( FindClosestActorToPlayer() );
+
+	if (spawnpoint && !spawnpoint->spawnstate)
+	{
+		if (BarricadeStoreData > 0)
+		{
+			GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "spawnable" ) );
+			GameMode->PrintPlace();
+			spawnpoint->meshcomp->SetVisibility( true );
+			spawnpoint->meshcomp->SetWorldLocation( spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f ) );
+			spawnpoint->meshcomp->SetWorldRotation( FRotator( 0.f , 90.f , 0.f ) );
+			player->Tmp_Spawnpoint = spawnpoint;
+		}
+		else
+		{
+			GameMode->PrintElse();
+		}
+	}
+}
+
+void AMainPlayer::SpawnObject()
+{
+	if (Spawnpoint && BarricadeStoreData > 0)
+	{
+		Spawnpoint->spawnstate = true;
+		BarricadeStoreData -= 1;
+		CashData -= BarricadePrice;
+		GameMode->PrintStore();
+		GameMode->PrintCash();
+		FVector ActorLocation = Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f );
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation( ActorLocation );
+		ABarricade* Barricade = GetWorld()->SpawnActor<ABarricade>( BarricadeFactory , SpawnTransform );
+	}
+}
 void AMainPlayer::RotateToMouseCursor()
 {
 	APlayerController* PlayerController = Cast<APlayerController>( GetController() );
@@ -316,17 +402,5 @@ void AMainPlayer::RotateToMouseCursor()
 			// 캐릭터 회전 적용
 			SetActorRotation( CurrentRotation );
 		}
-	}
-}
-
-void AMainPlayer::SpawnObject()
-{
-	if (Spawnpoint)
-	{
-		Spawnpoint->SpawnState = true;
-		FVector ActorLocation = Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f );
-		FTransform SpawnTransform;
-		SpawnTransform.SetLocation( ActorLocation );
-		ABarricade* Barricade = GetWorld()->SpawnActor<ABarricade>( BarricadeFactory , SpawnTransform );
 	}
 }

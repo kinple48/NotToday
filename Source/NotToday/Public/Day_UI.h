@@ -42,6 +42,9 @@ public:
 	UPROPERTY(EditAnywhere, meta=(BindWidget))
 	class UTextBlock* BuyText;
 
+	UPROPERTY(EditAnywhere, meta=(BindWidget))
+	class UTextBlock* NextLevelText;
+
 	//UPROPERTY(EditAnywhere, meta=(BindWidget))
 	//class UTextBlock* Remove;
 
@@ -51,11 +54,20 @@ public:
 	UPROPERTY(EditAnywhere, meta=(BindWidget))
 	class UButton* Button_Buy;
 
+	UPROPERTY(EditAnywhere, meta=(BindWidget))
+	class UButton* Button_NextLevel;
+
 	UFUNCTION()
 	void Place();
 
 	UFUNCTION()
 	void Buy();
 
+	TSubclassOf<class UUserWidget> NightWidget;
+
+	UFUNCTION()
+	void NextLevel();
+
 	class AMainPlayer* player;
+	class AMainGameModeBase* GameMode;
 };

@@ -80,9 +80,11 @@ public:
 	UPROPERTY()
     TMap<int32, AActor*> OverlapMap;
 	
-	int32 CalculateSlotIndex(AActor* Actor);
+	int32 CalculateSlotIndex(ASpawnPoint* Actor);
 
 	AActor* FindClosestActorToPlayer();
+
+	void OverlapEvent( ASpawnPoint* Spawnpoint, AMainPlayer* player );
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ABarricade> BarricadeFactory;
@@ -92,4 +94,21 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	class USkeletalMeshComponent* GunMesh;
+
+	UPROPERTY(EditAnywhere)
+	int32 CashData = 90000;
+
+	UPROPERTY(EditAnywhere)
+	int32 BarricadeStoreData = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 BarricadePrice = 200;
+
+	UPROPERTY(EditAnywhere)
+	class ABarricade* BarricadeObject;
+
+	class AMainGameModeBase* GameMode;
+
+	UPROPERTY()
+	bool CombatState = false;
 };

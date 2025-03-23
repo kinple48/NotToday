@@ -31,4 +31,5 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UStaticMeshComponent* meshcomp;
+
 };
