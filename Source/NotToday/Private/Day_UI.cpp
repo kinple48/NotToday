@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "SpawnPoint.h"
 #include "Barricade.h"
+#include "Components/BoxComponent.h"
 
 void UDay_UI::NativeConstruct()
 {
@@ -69,4 +70,49 @@ void UDay_UI::NextLevel()
 	GameMode->ChangeUI();
 	player->CombatState = true;
 	
+	TArray<AActor*> ActorsWithTag;
+	FName TagToSearch = TEXT( "Object" ); // 검색할 태그 이름
+
+	// 액터 검색
+	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , ActorsWithTag );
+
+	// 결과 출력
+	for (AActor* Actor : ActorsWithTag)
+	{
+		if (Actor)
+		{
+			auto Object = Cast<ABarricade>( Actor );
+			if (Object)
+			{
+				Object->meshcomp->SetCollisionEnabled( ECollisionEnabled::QueryAndPhysics );
+			}
+		}
+	}
+
+	TArray<AActor*> ActorWithTag;
+	TagToSearch = TEXT( "SpawnPoint" ); // 검색할 태그 이름
+
+	// 액터 검색
+	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , ActorWithTag );
+
+	// 결과 출력
+	for (AActor* Actor : ActorWithTag)
+	{
+		if (Actor)
+		{
+			auto Object = Cast<ASpawnPoint>( Actor );
+			if (Object)
+			{
+				Object->boxcomp->SetCollisionEnabled( ECollisionEnabled::NoCollision);
+			}
+		}
+	}
+
+	if (GameMode)
+	{
+		GameMode->SetHP( player->HP , player->HPMax );
+		GameMode->SetReload( player->Reload , player->ReloadMax );
+		GameMode->PrintCash();
+		GameMode->PrintScore();
+	}
 }

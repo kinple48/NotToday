@@ -53,6 +53,24 @@ void AMainGameModeBase::PrintCash()
 			Day_UI->CashDataText->SetText( FText::AsNumber(player->CashData));
 		}
 	}
+	if (Night_UI)
+	{
+		if (player)
+		{
+			Night_UI->CashDataText->SetText( FText::AsNumber( player->CashData ) );
+		}
+	}
+}
+
+void AMainGameModeBase::PrintScore()
+{
+	if (Night_UI)
+	{
+		if (player)
+		{
+			Night_UI->ScoreDataText->SetText( FText::AsNumber( player->ScoreData ) );
+		}
+	}
 }
 
 void AMainGameModeBase::PrintPrice()
@@ -102,4 +120,16 @@ void AMainGameModeBase::ChangeUI()
 			Night_UI->AddToViewport();
 		}
 	}
+}
+
+void AMainGameModeBase::SetHP( float Cur , float Max )
+{
+	if (!Night_UI) return;
+	Night_UI->SetHP( Cur , Max );
+}
+
+void AMainGameModeBase::SetReload( float Cur , float Max )
+{
+	if (!Night_UI) return;
+	Night_UI->SetReload( Cur , Max );
 }

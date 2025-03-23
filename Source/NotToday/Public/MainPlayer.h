@@ -99,6 +99,9 @@ public:
 	int32 CashData = 90000;
 
 	UPROPERTY(EditAnywhere)
+	int32 ScoreData = 0;
+
+	UPROPERTY(EditAnywhere)
 	int32 BarricadeStoreData = 0;
 
 	UPROPERTY(EditAnywhere)
@@ -111,4 +114,21 @@ public:
 
 	UPROPERTY()
 	bool CombatState = false;
+
+
+	//체력 시스템
+	float HP;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float HPMax = 100.f;
+
+	void SetDamage( int32 damage );
+
+	//장전 시스템
+	float Reload;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ReloadMax = 12.f;
+	float ReloadTime = 2.f;
+
+	void SetReload( );
 };

@@ -32,4 +32,12 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UStaticMeshComponent* meshcomp;
 
+	//체력 시스템
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float HP;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float HPMax = 10.f;
+
+	void SetDamage( int32 damage );
 };

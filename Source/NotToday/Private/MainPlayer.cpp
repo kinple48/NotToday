@@ -85,6 +85,8 @@ AMainPlayer::AMainPlayer()
 void AMainPlayer::BeginPlay()
 {
 	Super::BeginPlay();
+	HP = HPMax;
+	Reload = ReloadMax;
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMainPlayer::OnSpawnPointBeginOverlap);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AMainPlayer::OnSpawnPointEndOverlap);
 	GameMode = Cast<AMainGameModeBase>( UGameplayStatics::GetGameMode( GetWorld() ) );
@@ -96,15 +98,17 @@ void AMainPlayer::Tick(float DeltaTime)
 	if (CombatState)
 	{
 		RotateToMouseCursor();
-		if (bGunShot)
+		CurrentTime += DeltaTime;
+		if (bGunShot && Reload > 0 && CurrentTime >= MakeTime)
 		{
-			if (CurrentTime >= MakeTime)
-			{
-				GunShot();
-				CurrentTime = 0.f;
-			}
-			CurrentTime += DeltaTime;
-		
+			GunShot();
+			CurrentTime = 0.f;
+		}
+		if (Reload <= 0 && CurrentTime >= ReloadTime)
+		{
+			Reload = ReloadMax;
+			GameMode->SetReload( Reload , ReloadMax );
+			CurrentTime = 0.f;
 		}
 	}
 
@@ -161,7 +165,7 @@ void AMainPlayer::GunShotEnd(const struct FInputActionValue& InputValue)
 void AMainPlayer::GunShot()
 {
 	RotateToMouseCursor();
-	GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Red, TEXT("gunshot"));
+	//GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Red, TEXT("gunshot"));
 	FVector StartPoint = GunMesh->GetComponentLocation();
 	FVector ForwardVector;
 	APlayerController* PlayerController = Cast<APlayerController>( GetController() );
@@ -200,9 +204,14 @@ void AMainPlayer::GunShot()
 
 	if (bHit)
 	{
-
+		AActor* HitActor = hitInfo.GetActor();
+		BarricadeObject = Cast<ABarricade>( HitActor );
+		if (BarricadeObject)
+		{
+			BarricadeObject->SetDamage(1);
+		}
 	}
-
+	SetReload();
 	// 선그리기
 	DrawDebugLine(GetWorld(), StartPoint, EndPoint, FColor::White, false, 1, 0, 1);
 }
@@ -374,6 +383,25 @@ void AMainPlayer::SpawnObject()
 		ABarricade* Barricade = GetWorld()->SpawnActor<ABarricade>( BarricadeFactory , SpawnTransform );
 	}
 }
+
+void AMainPlayer::SetDamage( int32 damage )
+{
+	HP -= damage;
+	if (GameMode)
+	{
+		GameMode->SetHP( HP , HPMax );
+	}
+}
+
+void AMainPlayer::SetReload( )
+{
+	Reload -= 1;
+	if (GameMode)
+	{
+		GameMode->SetReload( Reload , ReloadMax );
+	}
+}
+
 void AMainPlayer::RotateToMouseCursor()
 {
 	APlayerController* PlayerController = Cast<APlayerController>( GetController() );

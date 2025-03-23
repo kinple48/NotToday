@@ -32,9 +32,14 @@ public:
 
 	void PrintStore();
 	void PrintCash();
+	void PrintScore();
 	void PrintPrice();
 	void PrintPlace();
 	void PrintRemove();
 	void PrintElse();
 	void ChangeUI();
+	
+	// 체력 시스템
+	void SetHP( float Cur , float Max );
+	void SetReload( float Cur , float Max );
 };
