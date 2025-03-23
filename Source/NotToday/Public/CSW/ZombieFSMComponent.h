@@ -14,10 +14,8 @@ class AZombieBase;
 UENUM(BlueprintType)
 enum class EZombieState : uint8
 {
-	//Idle,
 	Move,
 	Attack,
-	//Damage, //피격
 	Die,
 };
 

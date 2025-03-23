@@ -32,12 +32,12 @@ AZombieBase::AZombieBase()
 	// 유한상태머신
 	FSM = CreateDefaultSubobject<UZombieFSMComponent>(TEXT("FSM"));
 
+	// 아이템 드랍
+	ItemDrop = CreateDefaultSubobject<UItemDropComponent> (TEXT("ItemDrop"));
+	
 	// 네비게이션 인보커
 	NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
 	NavInvoker->SetGenerationRadii(1000.f, 1200.f);
-
-	// 아이템 드랍
-	ItemDropComponent = CreateDefaultSubobject<UItemDropComponent>(TEXT("ItemDropComponent"));
 	
 }
 
@@ -75,7 +75,7 @@ void AZombieBase::PostInitializeComponents()
 	FSM->AttackRange = Data->AttackRange;
 
 	// ItemDrop 컴포넌트 초기화
-	ItemDropComponent->Me = this;
+	ItemDrop->Me = this;
 }
 
 void AZombieBase::SetData(const FDataTableRowHandle& InDataTableRowHandle)

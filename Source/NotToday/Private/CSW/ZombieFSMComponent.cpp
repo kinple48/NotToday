@@ -62,7 +62,7 @@ TObjectPtr<AActor> UZombieFSMComponent::GetTarget() const
 void UZombieFSMComponent::SetState(EZombieState InState)
 {
 	FString StateName = UEnum::GetValueAsString(InState);
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, StateName);
+	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, StateName);
 	State = InState;
 }
 
@@ -152,7 +152,7 @@ void UZombieFSMComponent::AttackTick()
 	{
 		// 공격!
 		ElapsedTime = 0.f;
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Magenta, FString("Attack"));
+		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Magenta, FString("Attack"));
 		Me->PlayAnimMontage(Anim->ZombieMontage, 1.f, TEXT("Attack"));
 		AIController->StopMovement();
 		bAttackPlaying = true;
@@ -175,7 +175,6 @@ void UZombieFSMComponent::DieTick()
 {
 	if (ElapsedTime >= DieDestoryTime)
 	{
-		Me->ItemDropComponent->DropItem();
 		Me->Destroy();
 	}
 }
@@ -199,6 +198,8 @@ void UZombieFSMComponent::OnDamage(int32 damage)
 		Me->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		Me->PlayAnimMontage(Anim->ZombieMontage, 1.3f, TEXT("Die"));
 		AIController->StopMovement();
+
+		Me->ItemDrop->DropItem();
 	}
 }
 

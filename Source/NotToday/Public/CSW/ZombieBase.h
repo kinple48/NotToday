@@ -40,15 +40,8 @@ public:
 	TObjectPtr<UNavigationInvokerComponent> NavInvoker;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ItemDrop)
-	TObjectPtr<UItemDropComponent> ItemDropComponent;
+	TObjectPtr<UItemDropComponent> ItemDrop;
 	
 	void SetData(const FDataTableRowHandle& InDataTableRowHandle);
 	FORCEINLINE FEnemyTableRow* GetData() const { return Data; }
-	
-protected:
-
-	// UPROPERTY(EditDefaultsOnly, Category=Anim)
-	// TObjectPtr<UAnimMontage> AttackMontage;
-	// UPROPERTY(EditDefaultsOnly, Category=Anim)
-	// TObjectPtr<UAnimMontage> DieMontage;
 };
