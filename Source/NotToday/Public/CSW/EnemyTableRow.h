@@ -10,18 +10,43 @@
 USTRUCT()
 struct FEnemyTableRow : public FTableRowBase
 {
-	GENERATED_BODY() // GENERATED_USTRUCT_BODY() 대신 사용
+	GENERATED_BODY()
 
 public:
+	FEnemyTableRow()
+		: MaxWalkSpeed(0.0f) , MaxHP(0) , Damage(0), AttackDelayTime(0.0f), AttackRange(0.0f)
+	{ }
+	
 	UPROPERTY(EditAnywhere, Category = "Enemy")
 	FText DisplayName;
 
 	UPROPERTY(EditAnywhere, Category = "Enemy")
-	USkeletalMesh* SkeletalMesh;
+	TObjectPtr<USkeletalMesh> SkeletalMesh;
 
-	UPROPERTY(EditAnywhere, Category = "Enemy")
-	UStaticMesh* StaticMesh;
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Anim")
+	TSubclassOf<UAnimInstance> Anim;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
+	FTransform MeshOffsetTransform;
 
-	UPROPERTY(EditAnywhere, Category = "Enemy")
-	FTransform OffsetTransform;
-};
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
+	float MaxWalkSpeed;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
+	int32 MaxHP;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
+	int32 Damage; // 공격력
+
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
+	float AttackDelayTime;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
+	float AttackRange; // 사거리
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Anim")
+	TObjectPtr<UAnimMontage> AttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy | Anim")
+	TObjectPtr<UAnimMontage> DieMontage;
+}; 
