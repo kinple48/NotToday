@@ -9,6 +9,7 @@
 #include "MainPlayer.h"
 #include "NavigationSystem.h"
 #include "Components/CapsuleComponent.h"
+#include "CSW/ItemDropComponent.h"
 #include "CSW/ZombieAnim.h"
 #include "CSW/ZombieBase.h"
 #include "Kismet/GameplayStatics.h"
@@ -174,6 +175,7 @@ void UZombieFSMComponent::DieTick()
 {
 	if (ElapsedTime >= DieDestoryTime)
 	{
+		Me->ItemDropComponent->DropItem();
 		Me->Destroy();
 	}
 }
@@ -192,6 +194,7 @@ void UZombieFSMComponent::OnDamage(int32 damage)
 	{
 		// 사망
 		SetState(EZombieState::Die);
+		ElapsedTime = 0.f;
 		Me->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		Me->GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		Me->PlayAnimMontage(Anim->ZombieMontage, 1.3f, TEXT("Die"));

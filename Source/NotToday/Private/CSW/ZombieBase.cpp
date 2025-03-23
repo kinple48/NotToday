@@ -75,6 +75,7 @@ void AZombieBase::PostInitializeComponents()
 	FSM->AttackRange = Data->AttackRange;
 
 	// ItemDrop 컴포넌트 초기화
+	ItemDropComponent->Me = this;
 }
 
 void AZombieBase::SetData(const FDataTableRowHandle& InDataTableRowHandle)
