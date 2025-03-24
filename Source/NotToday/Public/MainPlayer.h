@@ -131,4 +131,6 @@ public:
 	float ReloadTime = 2.f;
 
 	void SetReload( );
+
+	
 };
