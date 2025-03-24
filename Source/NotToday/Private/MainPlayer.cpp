@@ -16,6 +16,8 @@
 #include "Barricade.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "MainGameModeBase.h"
+#include "CSW/ZombieBase.h"
+#include "CSW/ZombieFSMComponent.h"
 
 AMainPlayer::AMainPlayer()
 {
@@ -205,10 +207,10 @@ void AMainPlayer::GunShot()
 	if (bHit)
 	{
 		AActor* HitActor = hitInfo.GetActor();
-		BarricadeObject = Cast<ABarricade>( HitActor );
-		if (BarricadeObject)
+		AZombieBase* zombie = Cast<AZombieBase>( HitActor );
+		if (zombie)
 		{
-			BarricadeObject->SetDamage(1);
+			zombie->FSM->OnDamage(5);
 		}
 	}
 	SetReload();
