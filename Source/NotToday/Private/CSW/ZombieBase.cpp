@@ -9,7 +9,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Actor.h"
 #include "CSW/EnemyTableRow.h"
-#include "CSW/ItemDropComponent.h"
+#include "CSW/Item/ItemDropComponent.h"
 #include "CSW/ZombieAnim.h"
 #include "CSW/ZombieFSMComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"

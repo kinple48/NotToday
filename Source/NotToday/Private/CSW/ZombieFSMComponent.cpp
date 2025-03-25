@@ -9,7 +9,7 @@
 #include "MainPlayer.h"
 #include "NavigationSystem.h"
 #include "Components/CapsuleComponent.h"
-#include "CSW/ItemDropComponent.h"
+#include "CSW/Item/ItemDropComponent.h"
 #include "CSW/ZombieAnim.h"
 #include "CSW/ZombieBase.h"
 #include "Kismet/GameplayStatics.h"

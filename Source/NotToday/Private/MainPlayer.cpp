@@ -18,6 +18,7 @@
 #include "MainGameModeBase.h"
 #include "CSW/ZombieBase.h"
 #include "CSW/ZombieFSMComponent.h"
+#include "CSW/Item/DropItem.h"
 
 AMainPlayer::AMainPlayer()
 {
@@ -92,6 +93,8 @@ void AMainPlayer::BeginPlay()
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMainPlayer::OnSpawnPointBeginOverlap);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AMainPlayer::OnSpawnPointEndOverlap);
 	GameMode = Cast<AMainGameModeBase>( UGameplayStatics::GetGameMode( GetWorld() ) );
+	
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMainPlayer::OnBeginOverlap);
 }
 
 void AMainPlayer::Tick(float DeltaTime)
@@ -401,6 +404,16 @@ void AMainPlayer::SetReload( )
 	if (GameMode)
 	{
 		GameMode->SetReload( Reload , ReloadMax );
+	}
+}
+
+void AMainPlayer::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	auto item = Cast<ADropItem>(OtherActor);
+	if (item)
+	{
+		item->Apply(this);
 	}
 }
 
