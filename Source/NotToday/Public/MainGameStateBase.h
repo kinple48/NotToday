@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CSW/WaveTableRow.h"
+#include "CSW/ZombieBase.h"
 #include "GameFramework/GameStateBase.h"
 #include "MainGameStateBase.generated.h"
 
@@ -10,6 +12,7 @@
  * 
  */
 
+struct FWaveTableRow;
 class AZombieSpawner;
 
 UENUM(BlueprintType)
@@ -19,30 +22,55 @@ enum class EDayNightState : uint8
 	Night,
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDayNightChanged, EDayNightState, NewState);
+// DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDayNightChanged, EDayNightState, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDayStarted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnNightStarted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnZombieKilled, AZombieBase*, KilledZombie);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameClear);
 
 UCLASS()
 class NOTTODAY_API AMainGameStateBase : public AGameStateBase
 {
 	GENERATED_BODY()
 public:
-	FOnDayNightChanged OnDayNightChanged;
+	FOnDayStarted OnDayStarted;
+	FOnNightStarted OnNightStarted;
+	
+	FOnZombieKilled OnZombieKilled; // 좀비가 죽으면 ZombieKilled 함수에 의해 브로드캐스트 된다.
+	FOnGameClear OnGameClear;
 
 	UFUNCTION()
 	void SetDayNightState(EDayNightState NewState);
+	UFUNCTION()
+	void ZombieKilled(AZombieBase* Zombie);
 
 protected:
 	virtual void BeginPlay() override;
-
+	
 private:
+	UPROPERTY(VisibleAnywhere)
 	EDayNightState State;
 
-	FTimerHandle NightTimer; // 좀비가 모두 죽을 때까지 계속해서 확인한다.
+	void StartCheckAllKillLoop(float Rate);
+	
+	FTimerHandle CheckAllKillTimerHandle; // 좀비가 모두 죽을 때까지 계속해서 확인한다.
+	UFUNCTION()
+	void DecreaseAndCheckLeftToKill(AZombieBase* Zombie);
+	void CheckLeftZombieCount();
 
 	UFUNCTION()
-	void CheckAllKill();
+	void LoadNextWaveData();
 
-	int32 CurrentWave {1}; // 현재 웨이브
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UDataTable> WaveDataTable {nullptr};
+	UPROPERTY(VisibleAnywhere)
+	int32 NextWaveID {0};
+	//FString Zombies;
+	UPROPERTY(VisibleAnywhere)
+	int32 Money;
+	UPROPERTY(VisibleAnywhere)
+	int32 LeftToKill {0};
 
-	TArray<AZombieSpawner> ZombieSpawners; // 레벨에 있는 모든 좀비 스폰지점
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<AZombieSpawner> ZombieSpawner;
 };

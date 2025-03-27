@@ -12,7 +12,6 @@ struct FEnemyTableRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
-public:
 	FEnemyTableRow()
 		: MaxWalkSpeed(0.0f) , MaxHP(0) , Damage(0), AttackDelayTime(0.0f), AttackRange(0.0f)
 	{ }

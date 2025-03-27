@@ -18,7 +18,7 @@
 AZombieBase::AZombieBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	PRINT_LOG(CSW, TEXT("AZombieBase::AZombieBase()"));
+	//PRINT_LOG(CSW, TEXT("AZombieBase::AZombieBase()"));
 
 	// 충돌 세팅
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block); //플레이어 공격과 상호작용 O
@@ -37,21 +37,21 @@ AZombieBase::AZombieBase()
 	
 	// 네비게이션 인보커
 	NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
-	NavInvoker->SetGenerationRadii(1000.f, 1200.f);
+	NavInvoker->SetGenerationRadii(3000.f, 3500.f);
 	
 }
 
 void AZombieBase::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-	PRINT_LOG(CSW, TEXT("AZombieBase::OnConstruction"));
+	//PRINT_LOG(CSW, TEXT("AZombieBase::OnConstruction"));
 	SetData(DTRowHandle);
 }
 
 void AZombieBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	PRINT_LOG(CSW, TEXT("AZombieBase::PostInitializeComponents"));
+	//PRINT_LOG(CSW, TEXT("AZombieBase::PostInitializeComponents"));
 	if (!Data)
 	{
 		SetData(DTRowHandle);
@@ -67,7 +67,7 @@ void AZombieBase::PostInitializeComponents()
 	FSM->Me = this;
 	FSM->Anim = Cast<UZombieAnim>(GetMesh()->GetAnimInstance());
 	FSM->Anim->ZombieMontage = Data->Montage;
-	FSM->AIController = Cast<AAIController>(GetController());
+	
 	
 	FSM->MaxHP = Data->MaxHP;
 	FSM->Damage = Data->Damage;
@@ -78,9 +78,26 @@ void AZombieBase::PostInitializeComponents()
 	ItemDrop->Me = this;
 }
 
+void AZombieBase::BeginPlay()
+{
+	Super::BeginPlay();
+	//PRINT_LOG(CSW, TEXT("AZombieBase::BeginPlay"));
+	//FSM->AIController = Cast<AAIController>(GetController());
+	AAIController* AIController = Cast<AAIController>(GetController());
+	if (AIController)
+	{
+		FSM->AIController = AIController;
+		//PRINT_LOG(CSW, TEXT("AIController assigned in BeginPlay!"));
+	}
+	else
+	{
+		PRINT_LOG(CSW, TEXT("AIController is nullptr in BeginPlay!"));
+	}
+}
+
 void AZombieBase::SetData(const FDataTableRowHandle& InDataTableRowHandle)
 {
-	PRINT_LOG(CSW, TEXT("AZombieBase::SetData"));
+	//PRINT_LOG(CSW, TEXT("AZombieBase::SetData"));
 
 	if (InDataTableRowHandle.IsNull()) { return; }
 	DTRowHandle = InDataTableRowHandle;
@@ -106,12 +123,7 @@ void AZombieBase::SetData(const FDataTableRowHandle& InDataTableRowHandle)
 	UE_LOG(LogTemp, Warning, TEXT("HP: %d, Damage: %d"), Data->MaxHP, Data->Damage);
 }
 
-void AZombieBase::BeginPlay()
-{
-	Super::BeginPlay();
-	PRINT_LOG(CSW, TEXT("AZombieBase::BeginPlay"));
 
-}
 
 void AZombieBase::Tick(float DeltaTime)
 {

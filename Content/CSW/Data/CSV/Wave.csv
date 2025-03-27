@@ -1,0 +1,17 @@
+Dummy,ID,Zombies,Money
+1,1,"NormalZombie:5, FastZombie:2",1000
+2,2,"NormalZombie:7, FastZombie:5",2000
+3,3,"NormalZombie:9, FastZombie:7",3000
+4,4,"NormalZombie:10, FastZombie8",4000
+5,5,"NormalZombie:15, FastZombie:10",5000
+6,-1,0,0
+7,,,
+8,,,
+9,,,
+10,,,
+11,,,
+12,,,
+13,,,
+14,,,
+15,,,
+16,,,

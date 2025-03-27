@@ -7,6 +7,8 @@
 #include "Components/ActorComponent.h"
 #include "ZombieFSMComponent.generated.h"
 
+class UZombieAnim;
+class AAIController;
 class ABarricade;
 class AMainPlayer;
 class AZombieBase;
@@ -34,15 +36,15 @@ protected:
 
 public:
 	// 컴포넌트 소유 액터
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<AZombieBase> Me;
 	
-	UPROPERTY()
-	class UZombieAnim* Anim;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UZombieAnim> Anim;
 
 	// AI
-	UPROPERTY()
-	class AAIController* AIController;
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<AAIController> AIController;
 
 	// 공격대상
 	UPROPERTY(VisibleAnywhere)

@@ -8,6 +8,7 @@
 
 class AMainPlayer;
 class USphereComponent;
+class USoundCue;
 
 UCLASS(Abstract)
 class NOTTODAY_API ADropItem : public AActor
