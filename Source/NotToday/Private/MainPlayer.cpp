@@ -18,7 +18,9 @@
 #include "MainGameModeBase.h"
 #include "CSW/ZombieBase.h"
 #include "CSW/ZombieFSMComponent.h"
-#include "CSW/Item/DropItem.h"
+#include "Components/SphereComponent.h"
+#include "Day_UI.h"
+#include "DefenseTower.h"
 
 AMainPlayer::AMainPlayer()
 {
@@ -42,6 +44,10 @@ AMainPlayer::AMainPlayer()
 	VRCamera = CreateDefaultSubobject<UCameraComponent>( TEXT( "VRCamera" ) );
 	VRCamera->SetupAttachment( SpringArmComp );
 	VRCamera->bUsePawnControlRotation = false;
+
+	spherecomp = CreateDefaultSubobject<USphereComponent>( TEXT( "spherecomp" ) );
+	spherecomp->SetupAttachment( RootComponent );
+	
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -81,8 +87,7 @@ AMainPlayer::AMainPlayer()
 	if (TempSound.Succeeded())
 	{
 		BulletSound = TempSound.Object;
-	}
-
+	}                                                                                                                                                                                                                                                                                                                                                                             
 }
 
 void AMainPlayer::BeginPlay()
@@ -92,9 +97,8 @@ void AMainPlayer::BeginPlay()
 	Reload = ReloadMax;
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMainPlayer::OnSpawnPointBeginOverlap);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AMainPlayer::OnSpawnPointEndOverlap);
+	spherecomp->OnComponentBeginOverlap.AddDynamic( this , &AMainPlayer::OnSphereBeginOverlap );
 	GameMode = Cast<AMainGameModeBase>( UGameplayStatics::GetGameMode( GetWorld() ) );
-	
-	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMainPlayer::OnBeginOverlap);
 }
 
 void AMainPlayer::Tick(float DeltaTime)
@@ -146,6 +150,11 @@ void AMainPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		InputSystem->BindAction(IA_GunShot, ETriggerEvent::Started, this, &AMainPlayer::GunShotStart);
 		InputSystem->BindAction(IA_GunShot, ETriggerEvent::Completed, this, &AMainPlayer::GunShotEnd);
 	}
+}
+
+void AMainPlayer::OnSphereBeginOverlap( UPrimitiveComponent* OverlappedComponent , AActor* OtherActor , UPrimitiveComponent* OtherComp , int32 OtherBodyIndex , bool bFromSweep , const FHitResult& SweepResult )
+{
+	// 아이템, 재화 획득 처리 함수
 }
 
 void AMainPlayer::Move(const struct FInputActionValue& InputValue)
@@ -227,7 +236,8 @@ void AMainPlayer::OnSpawnPointBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	{
 		GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "Can't Spawn" ) );
 		GameMode->PrintRemove();
-		BarricadeObject = Cast<ABarricade>( OtherActor );
+		//BarricadeObject = Cast<ABarricade>( OtherActor );
+		OverlapActor = Cast<AActor>( OtherActor );
 	}
 	else if (OtherActor->ActorHasTag( TEXT("SpawnPoint")))
 	{
@@ -244,13 +254,14 @@ void AMainPlayer::OnSpawnPointBeginOverlap(UPrimitiveComponent* OverlappedCompon
 
 			if (Spawnpoint && !Spawnpoint->spawnstate)
 			{
-				if (BarricadeStoreData > 0)
+				if (StoreData > 0)
 				{
 					GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "spawnable" ) );
 					GameMode->PrintPlace();
 					Spawnpoint->meshcomp->SetVisibility( true );
-					Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f ) );
-					Spawnpoint->meshcomp->SetWorldRotation( FRotator( 0.f , 90.f , 0.f ) );
+					Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - SpawnLocation);
+					Spawnpoint->meshcomp->SetWorldRotation( SpawnRotation );
+					Spawnpoint->meshcomp->SetRelativeScale3D( SpawnScale );
 					Tmp_Spawnpoint = Spawnpoint;
 				}
 				else
@@ -282,12 +293,13 @@ void AMainPlayer::OnSpawnPointEndOverlap(UPrimitiveComponent* OverlappedComponen
 		
 		if (Spawnpoint && !Spawnpoint->spawnstate)
 		{
-			if (BarricadeStoreData > 0)
+			if (StoreData > 0)
 			{
 				//GameMode->PrintPlace();
 				Spawnpoint->meshcomp->SetVisibility( true );
-				Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f ) );
-				Spawnpoint->meshcomp->SetWorldRotation( FRotator( 0.f , 90.f , 0.f ) );
+				Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - SpawnLocation );
+				Spawnpoint->meshcomp->SetWorldRotation( SpawnRotation );
+				Spawnpoint->meshcomp->SetRelativeScale3D( SpawnScale );
 				Tmp_Spawnpoint = Spawnpoint;
 			}
 			else
@@ -355,16 +367,17 @@ void AMainPlayer::OverlapEvent( ASpawnPoint* spawnpoint, AMainPlayer* player )
 	OverlapMap.Add( SlotIndex , spawnpoint ); // 해당 칸에 객체 추가
 	Spawnpoint = Cast<ASpawnPoint>( FindClosestActorToPlayer() );
 
-	if (spawnpoint && !spawnpoint->spawnstate)
+	if (Spawnpoint && !Spawnpoint->spawnstate)
 	{
-		if (BarricadeStoreData > 0)
+		if (StoreData > 0)
 		{
 			GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "spawnable" ) );
 			GameMode->PrintPlace();
-			spawnpoint->meshcomp->SetVisibility( true );
-			spawnpoint->meshcomp->SetWorldLocation( spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f ) );
-			spawnpoint->meshcomp->SetWorldRotation( FRotator( 0.f , 90.f , 0.f ) );
-			player->Tmp_Spawnpoint = spawnpoint;
+			Spawnpoint->meshcomp->SetVisibility( true );
+			Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - SpawnLocation );
+			Spawnpoint->meshcomp->SetWorldRotation( SpawnRotation );
+			Spawnpoint->meshcomp->SetRelativeScale3D( SpawnScale );
+			player->Tmp_Spawnpoint = Spawnpoint;
 		}
 		else
 		{
@@ -375,17 +388,21 @@ void AMainPlayer::OverlapEvent( ASpawnPoint* spawnpoint, AMainPlayer* player )
 
 void AMainPlayer::SpawnObject()
 {
-	if (Spawnpoint && BarricadeStoreData > 0)
+	if (Spawnpoint && StoreData > 0)
 	{
 		Spawnpoint->spawnstate = true;
-		BarricadeStoreData -= 1;
-		CashData -= BarricadePrice;
-		GameMode->PrintStore();
-		GameMode->PrintCash();
 		FVector ActorLocation = Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f );
 		FTransform SpawnTransform;
 		SpawnTransform.SetLocation( ActorLocation );
-		ABarricade* Barricade = GetWorld()->SpawnActor<ABarricade>( BarricadeFactory , SpawnTransform );
+		//ABarricade* Barricade = GetWorld()->SpawnActor<ABarricade>( BarricadeFactory , SpawnTransform );
+		if (GameMode->Day_UI->ObjectType)
+		{
+			GetWorld()->SpawnActor<ABarricade>( BarricadeFactory , SpawnTransform );
+		}
+		else
+		{
+			GetWorld()->SpawnActor<ADefenseTower>( AutoTurretFactory , SpawnTransform );
+		}
 	}
 }
 
@@ -404,16 +421,6 @@ void AMainPlayer::SetReload( )
 	if (GameMode)
 	{
 		GameMode->SetReload( Reload , ReloadMax );
-	}
-}
-
-void AMainPlayer::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	auto item = Cast<ADropItem>(OtherActor);
-	if (item)
-	{
-		item->Apply(this);
 	}
 }
 

@@ -27,6 +27,12 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class USphereComponent* spherecomp;
+
+	UFUNCTION()
+	void OnSphereBeginOverlap( UPrimitiveComponent* OverlappedComponent , AActor* OtherActor , UPrimitiveComponent* OtherComp , int32 OtherBodyIndex , bool bFromSweep , const FHitResult& SweepResult );
+
 	UPROPERTY(VisibleAnywhere)
 	class UCameraComponent* VRCamera;
 
@@ -89,6 +95,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ABarricade> BarricadeFactory;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ADefenseTower> AutoTurretFactory;
+
 	void RotateToMouseCursor();
 	void SpawnObject();
 
@@ -102,14 +111,29 @@ public:
 	int32 ScoreData = 0;
 
 	UPROPERTY(EditAnywhere)
+	int32 StoreData = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 Price = 200;
+
+	UPROPERTY(EditAnywhere)
 	int32 BarricadeStoreData = 0;
 
 	UPROPERTY(EditAnywhere)
 	int32 BarricadePrice = 200;
 
 	UPROPERTY(EditAnywhere)
+	int32 AutoTurretStoreData = 0;
+
+	UPROPERTY(EditAnywhere)
+	int32 AutoTurretPrice = 3000;
+
+
+	UPROPERTY(EditAnywhere)
 	class ABarricade* BarricadeObject;
 
+	UPROPERTY(EditAnywhere)
+	class AActor* OverlapActor;
 	class AMainGameModeBase* GameMode;
 
 	UPROPERTY()
@@ -132,7 +156,9 @@ public:
 
 	void SetReload( );
 
-	UFUNCTION()
-	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
+	
+	// spawn point mesh 조작
+	FVector SpawnLocation = FVector( 0.f , 0.f , 0.f );
+	FRotator SpawnRotation = FRotator( 0.f , 0.f , 0.f );
+	FVector SpawnScale = FVector( 0.f , 0.f , 0.f );
 };

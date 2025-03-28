@@ -26,11 +26,11 @@ ASpawnPoint::ASpawnPoint()
 	{
 		meshcomp->SetStaticMesh(Temp_Object.Object);
 	}
-	ConstructorHelpers::FObjectFinder <UMaterial> Temp_Material( TEXT( "/Script/Engine.Material'/Game/LJW/Asset/Barricade/source/tmp_Barricade.tmp_Barricade'" ) );
+	/*ConstructorHelpers::FObjectFinder <UMaterial> Temp_Material( TEXT( "/Script/Engine.Material'/Game/LJW/Asset/Barricade/source/tmp_Barricade.tmp_Barricade'" ) );
 	if (Temp_Material.Succeeded())
 	{
 		meshcomp->SetMaterial( 0,Temp_Material.Object );
-	}
+	}*/
 }
 
 // Called when the game starts or when spawned

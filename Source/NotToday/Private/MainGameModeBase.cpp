@@ -39,7 +39,7 @@ void AMainGameModeBase::PrintStore()
 	{
 		if (player)
 		{
-			Day_UI->StoreDataText->SetText( FText::AsNumber( player->BarricadeStoreData ) );
+			Day_UI->StoreDataText->SetText( FText::AsNumber( player->StoreData ) );
 		}
 	}
 }
@@ -80,7 +80,7 @@ void AMainGameModeBase::PrintPrice()
 		if (player)
 		{
 
-			Day_UI->PriceDataText->SetText( FText::AsNumber( player->BarricadePrice ) );
+			Day_UI->PriceDataText->SetText( FText::AsNumber( player->Price ) );
 		}
 	}
 }
@@ -97,6 +97,7 @@ void AMainGameModeBase::PrintRemove()
 {
 	if (Day_UI)
 	{
+		if (player->CombatState) return;
 		Day_UI->PlaceText->SetText( FText::FromString( TEXT( "REMOVE" ) ) );
 	}
 }
