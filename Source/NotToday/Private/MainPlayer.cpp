@@ -21,6 +21,7 @@
 #include "Components/SphereComponent.h"
 #include "Day_UI.h"
 #include "DefenseTower.h"
+#include "CSW/Item/DropItem.h"
 
 AMainPlayer::AMainPlayer()
 {
@@ -44,10 +45,6 @@ AMainPlayer::AMainPlayer()
 	VRCamera = CreateDefaultSubobject<UCameraComponent>( TEXT( "VRCamera" ) );
 	VRCamera->SetupAttachment( SpringArmComp );
 	VRCamera->bUsePawnControlRotation = false;
-
-	spherecomp = CreateDefaultSubobject<USphereComponent>( TEXT( "spherecomp" ) );
-	spherecomp->SetupAttachment( RootComponent );
-	
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -97,7 +94,9 @@ void AMainPlayer::BeginPlay()
 	Reload = ReloadMax;
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMainPlayer::OnSpawnPointBeginOverlap);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AMainPlayer::OnSpawnPointEndOverlap);
-	spherecomp->OnComponentBeginOverlap.AddDynamic( this , &AMainPlayer::OnSphereBeginOverlap );
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMainPlayer::OnDropItemBeginOverlap);
+	
 	GameMode = Cast<AMainGameModeBase>( UGameplayStatics::GetGameMode( GetWorld() ) );
 }
 
@@ -150,11 +149,6 @@ void AMainPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		InputSystem->BindAction(IA_GunShot, ETriggerEvent::Started, this, &AMainPlayer::GunShotStart);
 		InputSystem->BindAction(IA_GunShot, ETriggerEvent::Completed, this, &AMainPlayer::GunShotEnd);
 	}
-}
-
-void AMainPlayer::OnSphereBeginOverlap( UPrimitiveComponent* OverlappedComponent , AActor* OtherActor , UPrimitiveComponent* OtherComp , int32 OtherBodyIndex , bool bFromSweep , const FHitResult& SweepResult )
-{
-	// 아이템, 재화 획득 처리 함수
 }
 
 void AMainPlayer::Move(const struct FInputActionValue& InputValue)
@@ -312,6 +306,17 @@ void AMainPlayer::OnSpawnPointEndOverlap(UPrimitiveComponent* OverlappedComponen
 	{
 			GameMode->PrintElse();
 	}*/
+}
+
+void AMainPlayer::OnDropItemBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	// 아이템, 재화 획득 처리 함수
+	auto item = Cast<ADropItem>(OtherActor);
+	if (item)
+	{
+		item->Apply(this);
+	}
 }
 
 

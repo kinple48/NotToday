@@ -123,8 +123,6 @@ void AZombieBase::SetData(const FDataTableRowHandle& InDataTableRowHandle)
 	UE_LOG(LogTemp, Warning, TEXT("HP: %d, Damage: %d"), Data->MaxHP, Data->Damage);
 }
 
-
-
 void AZombieBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

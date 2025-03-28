@@ -3,6 +3,7 @@
 
 #include "CSW/Item/DropMoneyItem.h"
 
+#include "MainGameModeBase.h"
 #include "MainPlayer.h"
 
 ADropMoneyItem::ADropMoneyItem() 
@@ -19,5 +20,14 @@ ADropMoneyItem::ADropMoneyItem()
 void ADropMoneyItem::Apply(AMainPlayer* Player)
 {
     Player->CashData += 300.f;
+    auto GameMode = GetWorld()->GetAuthGameMode();
+    if (GameMode)
+    {
+        auto MainGameMode = Cast<AMainGameModeBase>(GameMode);
+        if (MainGameMode)
+        {
+            MainGameMode->PrintCash();
+        }
+    }
     Super::Apply(Player);
 }

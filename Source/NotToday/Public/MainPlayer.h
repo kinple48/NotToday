@@ -27,12 +27,6 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class USphereComponent* spherecomp;
-
-	UFUNCTION()
-	void OnSphereBeginOverlap( UPrimitiveComponent* OverlappedComponent , AActor* OtherActor , UPrimitiveComponent* OtherComp , int32 OtherBodyIndex , bool bFromSweep , const FHitResult& SweepResult );
-
 	UPROPERTY(VisibleAnywhere)
 	class UCameraComponent* VRCamera;
 
@@ -83,6 +77,9 @@ public:
 	UFUNCTION()
 	void OnSpawnPointEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	UFUNCTION()
+	void OnDropItemBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	UPROPERTY()
     TMap<int32, AActor*> OverlapMap;
 	
@@ -105,7 +102,7 @@ public:
 	class USkeletalMeshComponent* GunMesh;
 
 	UPROPERTY(EditAnywhere)
-	int32 CashData = 90000;
+	int32 CashData = 0;
 
 	UPROPERTY(EditAnywhere)
 	int32 ScoreData = 0;

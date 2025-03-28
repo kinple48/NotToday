@@ -10,6 +10,7 @@
 #include "Barricade.h"
 #include "Components/BoxComponent.h"
 #include "DefenseTower.h"
+#include "MainGameStateBase.h"
 
 void UDay_UI::NativeConstruct()
 {
@@ -185,6 +186,16 @@ void UDay_UI::NextLevel()
 		GameMode->SetReload( player->Reload , player->ReloadMax );
 		GameMode->PrintCash();
 		GameMode->PrintScore();
+	}
+
+	auto GameState = GetWorld()->GetGameState();
+	if (GameState)
+	{
+		auto MainGameState = Cast<AMainGameStateBase>(GameState);
+		if (MainGameState)
+		{
+			MainGameState->SetDayNightState(EDayNightState::Night);
+		}
 	}
 }
 

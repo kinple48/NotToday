@@ -3,7 +3,9 @@
 
 #include "CSW/Item/DropHPItem.h"
 
+#include "MainGameModeBase.h"
 #include "MainPlayer.h"
+#include "Night_UI.h"
 
 ADropHPItem::ADropHPItem()
 {
@@ -18,5 +20,14 @@ ADropHPItem::ADropHPItem()
 void ADropHPItem::Apply(AMainPlayer* Player)
 {
     Player->HP = FMath::Min(Player->HP + 30, Player->HPMax);
+    auto GameMode = GetWorld()->GetAuthGameMode();
+    if (GameMode)
+    {
+        auto MainGameMode = Cast<AMainGameModeBase>(GameMode);
+        if (MainGameMode)
+        {
+            MainGameMode->Night_UI->SetHP(Player->HP, Player->HPMax);
+        }
+    }
     Super::Apply(Player);
 }

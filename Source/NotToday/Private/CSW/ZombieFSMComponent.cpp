@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "AITypes.h"
 #include "Barricade.h"
+#include "DefenseTower.h"
 #include "MainGameStateBase.h"
 #include "MainPlayer.h"
 #include "NavigationSystem.h"
@@ -182,6 +183,21 @@ void UZombieFSMComponent::AttackTick()
 		Me->PlayAnimMontage(Anim->ZombieMontage, 1.f, TEXT("Attack"));
 		AIController->StopMovement();
 		bAttackPlaying = true;
+		if (Target == Player)
+		{
+			Player->SetDamage(Damage);
+		}
+		else
+		{
+			if (const auto Barricade = Cast<ABarricade>(Target))
+			{
+				Barricade->SetDamage(Damage);
+			}
+			else if (const auto DefenseTower = Cast<ADefenseTower>(Target))
+			{
+				// DefenseTower->SetDamage(Damage);
+			}
+		}
 	}
 	else
 	{
@@ -199,8 +215,6 @@ void UZombieFSMComponent::AttackTick()
 
 void UZombieFSMComponent::DieTick()
 {
-	
-
 	// 일정시간 후에
 	if (ElapsedTime >= DieDestoryTime)
 	{
