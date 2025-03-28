@@ -11,10 +11,12 @@ ABarricade::ABarricade()
 	PrimaryActorTick.bCanEverTick = true;
 	boxcomp = CreateDefaultSubobject<UBoxComponent>( TEXT( "boxcomp" ) );
 	boxcomp->SetupAttachment( RootComponent );
+	boxcomp->SetCollisionResponseToChannel(ECC_GameTraceChannel4, ECR_Block); // ZombieTarget 채널
 
 	meshcomp = CreateDefaultSubobject<UStaticMeshComponent>( TEXT( "meshcomp" ) );
 	meshcomp->SetupAttachment( boxcomp );
 	meshcomp->SetCollisionEnabled( ECollisionEnabled::NoCollision );
+	meshcomp->SetCollisionResponseToChannel(ECC_GameTraceChannel4, ECR_Block); // ZombieTarget 채널
 
 	ConstructorHelpers::FObjectFinder<UStaticMesh>Temp_Object(TEXT("/Script/Engine.StaticMesh'/Game/LJW/Asset/Barricade/source/SM_Barricade.SM_Barricade'"));
 	if (Temp_Object.Succeeded())

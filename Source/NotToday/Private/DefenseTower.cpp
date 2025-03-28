@@ -6,7 +6,6 @@
 #include "Components/SphereComponent.h"
 #include "CSW/ZombieBase.h"
 #include "CSW/ZombieFSMComponent.h"
-#include "UObject/FastReferenceCollector.h"
 
 // Sets default values
 ADefenseTower::ADefenseTower()
@@ -16,10 +15,12 @@ ADefenseTower::ADefenseTower()
 
 	boxcomp = CreateDefaultSubobject<UBoxComponent>( TEXT( "boxcomp" ) );
 	boxcomp->SetupAttachment( RootComponent );
+	boxcomp->SetCollisionResponseToChannel(ECC_GameTraceChannel4, ECR_Block); // ZombieTarget 채널
 
 	meshcomp = CreateDefaultSubobject<UStaticMeshComponent>( TEXT( "meshcomp" ) );
 	meshcomp->SetupAttachment( boxcomp );
 	meshcomp->SetCollisionEnabled( ECollisionEnabled::NoCollision );
+	meshcomp->SetCollisionResponseToChannel(ECC_GameTraceChannel4, ECR_Block); // ZombieTarget 채널
 
 	spherecomp = CreateDefaultSubobject<USphereComponent>( TEXT( "spherecomp" ) );
 	spherecomp->SetupAttachment( boxcomp );
@@ -43,6 +44,7 @@ void ADefenseTower::BeginPlay()
 	Super::BeginPlay();
 	spherecomp->OnComponentBeginOverlap.AddDynamic(this, &ADefenseTower::OnSphereBeginOverlap);
 	spherecomp->OnComponentEndOverlap.AddDynamic( this , &ADefenseTower::OnSphereEndOverlap );
+	HP = HPMax;
 }
 
 // Called every frame
@@ -109,6 +111,16 @@ void ADefenseTower::Tick(float DeltaTime)
 		
 		DrawDebugLine( GetWorld() , Start , End , bHit ? FColor::Blue : FColor::Red , false , 0.1f , 0 , 2.0f );
 		CurrentTime = 0.0f;
+	}
+}
+
+void ADefenseTower::SetDamage(int32 damage)
+{
+	HP -= damage;
+
+	if (HP <= 0)
+	{
+		this->Destroy();
 	}
 }
 

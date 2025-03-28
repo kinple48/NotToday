@@ -30,6 +30,8 @@ AMainPlayer::AMainPlayer()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel4, ECR_Block); // ZombieTarget 채널
+
 	GunMesh = CreateDefaultSubobject<USkeletalMeshComponent>( TEXT( "GunMesh" ));
 	GunMesh->SetupAttachment( GetMesh() , TEXT( "RightHandSocket" ) );
 

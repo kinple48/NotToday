@@ -11,7 +11,6 @@ void UNight_UI::NativeConstruct()
 {
 	player = Cast<AMainPlayer>( GetWorld()->GetFirstPlayerController()->GetPawn() );
 	GameMode = Cast<AMainGameModeBase>( UGameplayStatics::GetGameMode( GetWorld() ) );
-
 }
 
 void UNight_UI::SetHP( float Cur , float Max )

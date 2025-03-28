@@ -7,11 +7,13 @@
 #include "Components/ActorComponent.h"
 #include "ZombieFSMComponent.generated.h"
 
+class ADefenseTower;
 class UZombieAnim;
 class AAIController;
 class ABarricade;
 class AMainPlayer;
 class AZombieBase;
+class UNavigationSystemV1;
 
 UENUM(BlueprintType)
 enum class EZombieState : uint8
@@ -45,6 +47,9 @@ public:
 	// AI
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<AAIController> AIController;
+	
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UNavigationSystemV1> NS;
 
 	// 공격대상
 	UPROPERTY(VisibleAnywhere)
@@ -53,9 +58,6 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	float DistToPlayer;
 	
-	UPROPERTY(VisibleAnywhere)
-	TArray<TObjectPtr<ABarricade>> Barricades;
-
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<AActor> Target;
 	
@@ -69,7 +71,8 @@ public:
 	EZombieState State;
 
 	TObjectPtr<ABarricade> FindClosestBarricade();
-	
+	TObjectPtr<ADefenseTower> FindClosestTower();
+
 	//void IdleTick();
 	void MoveTick();
 	void AttackTick();
@@ -91,11 +94,11 @@ public:
 
 	// 쫓기 거리
 	UPROPERTY(EditAnywhere, Category = FSM)
-	float ChaseRange = 500.0f; // 5m
+	float ChaseRange {500.0f}; // 5m
 	
 	// 공격 
 	UPROPERTY(EditAnywhere, Category = FSM)
-	float AttackRange; // 50cm
+	float AttackRange {170.f}; // 150cm
 
 	UPROPERTY(EditAnywhere, Category = FSM)
 	float AttackDelayTime;
