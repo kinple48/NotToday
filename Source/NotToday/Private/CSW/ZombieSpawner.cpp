@@ -38,6 +38,7 @@ void AZombieSpawner::BeginPlay()
 	if (!gs)
 	{
 		PRINT_LOG(CSW, TEXT("MainGameStateBase is nullptr"));
+		return;
 	}
 	gs->OnNightStarted.AddDynamic(this, &AZombieSpawner::SpawnZombie);
 }

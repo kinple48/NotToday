@@ -37,8 +37,16 @@ public:
 	void PrintPlace();
 	void PrintRemove();
 	void PrintElse();
-	void ChangeUI();
+
+	UFUNCTION()
+	void ChangeDtoN();
+	UFUNCTION()
+	void ChangeNtoD();
+
+	UFUNCTION()
+	void EndGame();
 	
+	class AMainGameModeBase* GameMode;
 	// 체력 시스템
 	void SetHP( float Cur , float Max );
 	void SetReload( float Cur , float Max );

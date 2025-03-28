@@ -22,6 +22,8 @@
 #include "Day_UI.h"
 #include "DefenseTower.h"
 #include "CSW/Item/DropItem.h"
+#include "MainGameStateBase.h"
+#include "Components/BoxComponent.h"
 
 AMainPlayer::AMainPlayer()
 {
@@ -98,6 +100,15 @@ void AMainPlayer::BeginPlay()
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMainPlayer::OnDropItemBeginOverlap);
 	
 	GameMode = Cast<AMainGameModeBase>( UGameplayStatics::GetGameMode( GetWorld() ) );
+
+	auto gs = Cast<AMainGameStateBase>( GetWorld()->GetGameState() );
+	if (!gs)
+	{
+		return;
+	}
+
+	gs->OnDayStarted.AddDynamic( this , &AMainPlayer::DayState );
+	gs->OnNightStarted.AddDynamic( this , &AMainPlayer::NightState );
 }
 
 void AMainPlayer::Tick(float DeltaTime)
@@ -230,7 +241,6 @@ void AMainPlayer::OnSpawnPointBeginOverlap(UPrimitiveComponent* OverlappedCompon
 	{
 		GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "Can't Spawn" ) );
 		GameMode->PrintRemove();
-		//BarricadeObject = Cast<ABarricade>( OtherActor );
 		OverlapActor = Cast<AActor>( OtherActor );
 	}
 	else if (OtherActor->ActorHasTag( TEXT("SpawnPoint")))
@@ -356,10 +366,6 @@ AActor* AMainPlayer::FindClosestActorToPlayer()
 		{
 			MinDistance = Distance;
 			ClosestActor = CurrentActor;
-			/*if (Tmp_Spawnpoint != nullptr)
-			{
-				Tmp_Spawnpoint->meshcomp->SetVisibility( false );
-			}*/
 		}
 	}
 
@@ -399,7 +405,6 @@ void AMainPlayer::SpawnObject()
 		FVector ActorLocation = Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f );
 		FTransform SpawnTransform;
 		SpawnTransform.SetLocation( ActorLocation );
-		//ABarricade* Barricade = GetWorld()->SpawnActor<ABarricade>( BarricadeFactory , SpawnTransform );
 		if (GameMode->Day_UI->ObjectType)
 		{
 			GetWorld()->SpawnActor<ABarricade>( BarricadeFactory , SpawnTransform );
@@ -426,6 +431,104 @@ void AMainPlayer::SetReload( )
 	if (GameMode)
 	{
 		GameMode->SetReload( Reload , ReloadMax );
+	}
+}
+
+void AMainPlayer::DayState()
+{
+	CombatState = false;
+
+	TArray<AActor*> ActorsWithTag;
+	FName TagToSearch = TEXT( "Object" ); // 검색할 태그 이름
+
+	// 액터 검색
+	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , ActorsWithTag );
+
+	// 결과 출력
+	for (AActor* Actor : ActorsWithTag)
+	{
+		if (Actor)
+		{
+			auto Object2 = Cast<ADefenseTower>( Actor );
+			if (Object2)
+			{
+				Object2->meshcomp->SetCollisionEnabled( ECollisionEnabled::NoCollision );
+			}
+			auto Object1 = Cast<ABarricade>( Actor );
+			if (Object1)
+			{
+				Object1->meshcomp->SetCollisionEnabled( ECollisionEnabled::NoCollision );
+			}
+
+
+		}
+	}
+
+	TArray<AActor*> ActorWithTag;
+	TagToSearch = TEXT( "SpawnPoint" ); // 검색할 태그 이름
+
+	// 액터 검색
+	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , ActorWithTag );
+
+	// 결과 출력
+	for (AActor* Actor : ActorWithTag)
+	{
+		if (Actor)
+		{
+			auto Object = Cast<ASpawnPoint>( Actor );
+			if (Object)
+			{
+				Object->boxcomp->SetCollisionEnabled( ECollisionEnabled::QueryAndPhysics );
+			}
+		}
+	}
+	
+}
+
+void AMainPlayer::NightState()
+{
+	CombatState = true;
+
+	TArray<AActor*> ActorsWithTag;
+	FName TagToSearch = TEXT( "Object" );
+	GameMode->SetHP( HP , HPMax );
+	GameMode->SetReload( Reload , ReloadMax );
+	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , ActorsWithTag );
+
+	for (AActor* Actor : ActorsWithTag)
+	{
+		if (Actor)
+		{
+			auto Object2 = Cast<ADefenseTower>( Actor );
+			if (Object2)
+			{
+				Object2->meshcomp->SetCollisionEnabled( ECollisionEnabled::QueryAndPhysics );
+			}
+			auto Object1 = Cast<ABarricade>( Actor );
+			if (Object1)
+			{
+				Object1->meshcomp->SetCollisionEnabled( ECollisionEnabled::QueryAndPhysics );
+			}
+
+
+		}
+	}
+
+	TArray<AActor*> ActorWithTag;
+	TagToSearch = TEXT( "SpawnPoint" );
+
+	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , ActorWithTag );
+
+	for (AActor* Actor : ActorWithTag)
+	{
+		if (Actor)
+		{
+			auto Object = Cast<ASpawnPoint>( Actor );
+			if (Object)
+			{
+				Object->boxcomp->SetCollisionEnabled( ECollisionEnabled::NoCollision );
+			}
+		}
 	}
 }
 

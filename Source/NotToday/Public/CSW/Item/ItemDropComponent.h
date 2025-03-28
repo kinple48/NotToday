@@ -30,5 +30,5 @@ public:
 	void DropItem();
 
 	UPROPERTY(EditAnywhere, Category = ItemDrop)
-	float RandToDrop {0.5f};
+	float RandToDrop {1.f};
 };

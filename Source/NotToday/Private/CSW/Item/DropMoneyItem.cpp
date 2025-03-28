@@ -29,5 +29,5 @@ void ADropMoneyItem::Apply(AMainPlayer* Player)
             MainGameMode->PrintCash();
         }
     }
-    Super::Apply(Player);
+    Destroy();
 }

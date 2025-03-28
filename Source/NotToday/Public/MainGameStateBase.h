@@ -58,9 +58,11 @@ private:
 	void DecreaseAndCheckLeftToKill(AZombieBase* Zombie);
 	void CheckLeftZombieCount();
 
+public:
 	UFUNCTION()
 	void LoadNextWaveData();
 
+private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UDataTable> WaveDataTable {nullptr};
 	UPROPERTY(VisibleAnywhere)
@@ -73,4 +75,10 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<AZombieSpawner> ZombieSpawner;
+
+	UPROPERTY(VisibleAnywhere)
+	class AMainPlayer* player;
+
+	UPROPERTY(VisibleAnywhere)
+	class APlayerController* pc;
 };

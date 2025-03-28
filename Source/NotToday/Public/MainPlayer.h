@@ -102,7 +102,7 @@ public:
 	class USkeletalMeshComponent* GunMesh;
 
 	UPROPERTY(EditAnywhere)
-	int32 CashData = 0;
+	int32 CashData = 30000;
 
 	UPROPERTY(EditAnywhere)
 	int32 ScoreData = 0;
@@ -134,7 +134,7 @@ public:
 	class AMainGameModeBase* GameMode;
 
 	UPROPERTY()
-	bool CombatState = false;
+	bool CombatState = true;
 
 
 	//체력 시스템
@@ -158,4 +158,11 @@ public:
 	FVector SpawnLocation = FVector( 0.f , 0.f , 0.f );
 	FRotator SpawnRotation = FRotator( 0.f , 0.f , 0.f );
 	FVector SpawnScale = FVector( 0.f , 0.f , 0.f );
+
+	UFUNCTION()
+	void DayState();
+
+	UFUNCTION()
+	void NightState();
+
 };

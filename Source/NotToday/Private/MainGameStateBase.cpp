@@ -7,11 +7,25 @@
 #include "CSW/WaveTableRow.h"
 #include "CSW/ZombieSpawner.h"
 #include "NotToday/NotToday.h"
+#include "MainPlayer.h"
 
 void AMainGameStateBase::BeginPlay()
 {
 	Super::BeginPlay();
 	ZombieSpawner = TActorIterator<AZombieSpawner>(GetWorld()).operator*();
+	player = Cast<AMainPlayer>( GetWorld()->GetFirstPlayerController()->GetPawn() );
+	if (player)
+	{
+		player->HP = player->HPMax;
+		player->Reload = player->ReloadMax;
+	}
+
+	pc = GetWorld()->GetFirstPlayerController();
+	if (pc)
+	{
+		pc->SetShowMouseCursor( true );
+	}
+
 	if (!ZombieSpawner)
 	{
 		PRINT_LOG(CSW, TEXT("ZombieSpawner == nullptr"));
@@ -22,7 +36,8 @@ void AMainGameStateBase::BeginPlay()
 	
 	OnZombieKilled.AddDynamic(this, &AMainGameStateBase::DecreaseAndCheckLeftToKill); // DecreaseAndCheckLeftToKill
 	
-	SetDayNightState(EDayNightState::Day);
+	LoadNextWaveData();
+	ZombieSpawner->SpawnZombie();
 }
 
 void AMainGameStateBase::SetDayNightState(EDayNightState NewState)

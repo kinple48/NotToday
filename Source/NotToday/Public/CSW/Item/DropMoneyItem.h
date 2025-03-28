@@ -15,5 +15,7 @@ class NOTTODAY_API ADropMoneyItem : public ADropItem
 	GENERATED_BODY()
 public:
 	ADropMoneyItem();
-	virtual void Apply(AMainPlayer* Player) override;
+	void Apply( AMainPlayer* Player ) ;
+	//virtual void Apply(AMainPlayer* Player) override;
+	 
 };

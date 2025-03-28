@@ -26,7 +26,6 @@ void UDay_UI::NativeConstruct()
 
 void UDay_UI::Place()
 {
-	//player = Cast<AMainPlayer>( GetWorld()->GetFirstPlayerController()->GetPawn() );
 	if (player)
 	{
 		if (player->Spawnpoint && !player->Spawnpoint->spawnstate )
@@ -47,28 +46,6 @@ void UDay_UI::Place()
 		}
 		else if (player->Spawnpoint && player->Spawnpoint->spawnstate)
 		{
-			/*if (player->BarricadeObject)
-			{
-				player->BarricadeObject->Destroy();
-				if (ObjectType)
-				{
-					player->BarricadeStoreData += 1;
-					player->StoreData = player->BarricadeStoreData;
-				}
-				else
-				{
-					player->AutoTurretStoreData += 1;
-					player->StoreData = player->AutoTurretStoreData;
-				}
-				
-				player->CashData += player->Price;
-				GameMode->PrintStore();
-				GameMode->PrintCash();
-				GameMode->PrintPlace();
-				player->Spawnpoint->spawnstate = false;
-				player->Spawnpoint->meshcomp->SetVisibility( true );
-			}*/
-
 			if (player->OverlapActor)
 			{
 				if (player->OverlapActor->ActorHasTag( TEXT( "Object" ) ))
@@ -97,9 +74,8 @@ void UDay_UI::Place()
 
 void UDay_UI::Buy()
 {
-	if (player)
+	if (player && (player->CashData - player->Price) > 0)
 	{
-		//player->StoreData += 1;
 		if (ObjectType)
 		{
 			GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "b buy" ) );
@@ -113,8 +89,6 @@ void UDay_UI::Buy()
 			player->StoreData = player->AutoTurretStoreData;
 		}
 		
-		
-
 		player->CashData -= player->Price;
 		if (player->Spawnpoint)
 		{
@@ -132,61 +106,6 @@ void UDay_UI::Buy()
 
 void UDay_UI::NextLevel()
 {
-	GameMode->ChangeUI();
-	player->CombatState = true;
-	
-	TArray<AActor*> ActorsWithTag;
-	FName TagToSearch = TEXT( "Object" ); // 검색할 태그 이름
-
-	// 액터 검색
-	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , ActorsWithTag );
-
-	// 결과 출력
-	for (AActor* Actor : ActorsWithTag)
-	{
-		if (Actor)
-		{
-			auto Object2 = Cast<ADefenseTower>( Actor );
-			if (Object2)
-			{
-				Object2->meshcomp->SetCollisionEnabled( ECollisionEnabled::QueryAndPhysics );
-			}
-			auto Object1 = Cast<ABarricade>( Actor );
-			if (Object1)
-			{
-				Object1->meshcomp->SetCollisionEnabled( ECollisionEnabled::QueryAndPhysics );
-			}
-
-			
-		}
-	}
-
-	TArray<AActor*> ActorWithTag;
-	TagToSearch = TEXT( "SpawnPoint" ); // 검색할 태그 이름
-
-	// 액터 검색
-	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , ActorWithTag );
-
-	// 결과 출력
-	for (AActor* Actor : ActorWithTag)
-	{
-		if (Actor)
-		{
-			auto Object = Cast<ASpawnPoint>( Actor );
-			if (Object)
-			{
-				Object->boxcomp->SetCollisionEnabled( ECollisionEnabled::NoCollision);
-			}
-		}
-	}
-
-	if (GameMode)
-	{
-		GameMode->SetHP( player->HP , player->HPMax );
-		GameMode->SetReload( player->Reload , player->ReloadMax );
-		GameMode->PrintCash();
-		GameMode->PrintScore();
-	}
 
 	auto GameState = GetWorld()->GetGameState();
 	if (GameState)
