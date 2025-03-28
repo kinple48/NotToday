@@ -6,9 +6,9 @@
 #include "Blueprint/UserWidget.h"
 #include "Day_UI.generated.h"
 
-/**
- * 
- */
+
+
+
 UCLASS()
 class NOTTODAY_API UDay_UI : public UUserWidget
 {
@@ -57,6 +57,12 @@ public:
 	UPROPERTY(EditAnywhere, meta=(BindWidget))
 	class UButton* Button_NextLevel;
 
+	UPROPERTY(EditAnywhere, meta=(BindWidget))
+	class UButton* Button_WoodenBarricade;
+
+	UPROPERTY(EditAnywhere, meta=(BindWidget))
+	class UButton* Button_AutoTurret;
+
 	UFUNCTION()
 	void Place();
 
@@ -68,6 +74,14 @@ public:
 	UFUNCTION()
 	void NextLevel();
 
+	UFUNCTION()
+	void WoodenBarricade();
+
+	UFUNCTION()
+	void AutoTurret();
+
 	class AMainPlayer* player;
 	class AMainGameModeBase* GameMode;
+
+	bool ObjectType = true;
 };

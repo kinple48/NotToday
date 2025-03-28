@@ -3,54 +3,45 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EnemyInterface.h"
 #include "GameFramework/Character.h"
 #include "ZombieBase.generated.h"
 
+class UNavigationInvokerComponent;
+class UZombieAnim;
+class UItemDropComponent;
+class UZombieFSMComponent;
 struct FEnemyTableRow;
 class UAnimInstance;
 class UAnimInstance;
 
 UCLASS(Abstract)
-class NOTTODAY_API AZombieBase : public ACharacter, public IEnemyInterface
+class NOTTODAY_API AZombieBase : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
 	AZombieBase();
 	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual void SetAttackTarget(AActor* InTarget) override;
-	
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void PostInitializeComponents() override; // 모든 컴포넌트가 초기화된 후 호출
 	
-	UPROPERTY(EditAnywhere, meta = (RowType="/Script/NotToday.EnemyTableRow")) // /Script/모듈명
+	UPROPERTY(EditAnywhere, meta = (RowType="/Script/NotToday.EnemyTableRow"), Category = Data) // /Script/모듈명
 	FDataTableRowHandle DTRowHandle;
 	FEnemyTableRow* Data;
 
-	UPROPERTY(EditAnywhere)
-	AActor* AttackTarget; // 공격대상
-	
 public:
-	// IEnemyInterface
-	void SetData(const FDataTableRowHandle& InDataTableRowHandle	);
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FSM)
+	TObjectPtr<UZombieFSMComponent> FSM;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AI)
+	TObjectPtr<UNavigationInvokerComponent> NavInvoker;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ItemDrop)
+	TObjectPtr<UItemDropComponent> ItemDrop;
+	
+	void SetData(const FDataTableRowHandle& InDataTableRowHandle);
 	FORCEINLINE FEnemyTableRow* GetData() const { return Data; }
-	
-	virtual AActor* GetTarget() const override;
-	
-private:
-	int32 MaxHP;
-	int32 HP;
-	int32 Damage; // 공격력
-	float AttackDelayTime;
-	float AttackRange; // 사거리
-	UPROPERTY(EditDefaultsOnly, Category=Anim)
-	TSubclassOf<UAnimInstance> Anim;
-	UPROPERTY(EditDefaultsOnly, Category=Anim)
-	TObjectPtr<UAnimMontage> AttackMontage;
-	UPROPERTY(EditDefaultsOnly, Category=Anim)
-	TObjectPtr<UAnimMontage> DieMontage;
 };
