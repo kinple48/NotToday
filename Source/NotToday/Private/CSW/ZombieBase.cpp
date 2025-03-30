@@ -52,6 +52,11 @@ AZombieBase::AZombieBase()
 	MeleeHitBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); // Pawn
 	MeleeHitBox->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap); // WorldDynamic
 	MeleeHitBox->OnComponentBeginOverlap.AddDynamic(this, &AZombieBase::OnMeleeHitBoxBeginOverlap);
+
+	//
+	GetCharacterMovement()->bUseRVOAvoidance = true;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 100.0f; // 회피 반경 설정
+
 }
 
 void AZombieBase::OnConstruction(const FTransform& Transform)

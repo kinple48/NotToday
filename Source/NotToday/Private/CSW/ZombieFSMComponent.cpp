@@ -99,8 +99,8 @@ void UZombieFSMComponent::MoveTick()
 	FVector PlayerLocation = Player->GetActorLocation();
 	DistToPlayer = FVector::Distance(PlayerLocation, Me->GetActorLocation());
 	
-	DrawDebugCircle(GetWorld(), Me->GetActorLocation() + FVector::UpVector*2, ChaseRange, 20, FColor::Orange);
-	DrawDebugCircle(GetWorld(), Me->GetActorLocation() + FVector::UpVector*4, AttackRange, 20, FColor::Red);
+	//DrawDebugCircle(GetWorld(), Me->GetActorLocation() + FVector::UpVector*2, ChaseRange, 20, FColor::Orange);
+	//DrawDebugCircle(GetWorld(), Me->GetActorLocation() + FVector::UpVector*4, AttackRange, 20, FColor::Red);
 	
 	Target = nullptr;
 	FNavLocation NavLocation;
@@ -135,7 +135,6 @@ void UZombieFSMComponent::MoveTick()
 				bool bFound = NS->ProjectPointToNavigation(ClosestTurret->GetActorLocation(), NavLocation, SearchExtent/*SearchExtent * 2.f*/);
 				if (bFound)
 				{
-					//AIController->MoveToLocation(NavLocation);
 					Target = ClosestTurret;
 				}
 			}
@@ -154,7 +153,6 @@ void UZombieFSMComponent::MoveTick()
 				bool bFound = NS->ProjectPointToNavigation(ClosestBarricade->GetActorLocation(), NavLocation, SearchExtent/*SearchExtent * 2.f*/);
 				if (bFound)
 				{
-					//AIController->MoveToLocation(NavLocation);
 					Target = ClosestBarricade;
 				}
 			}
@@ -175,36 +173,11 @@ void UZombieFSMComponent::MoveTick()
 	// 2. 타겟을 향해 이동한다
 	if (Target == Player)
 	{
-		AIController->MoveToLocation(Target->GetActorLocation());
+		AIController->MoveToLocation(GetRandomOffsetLocation(Target->GetActorLocation()));
 	}
 	else
 	{
-		AIController->MoveToLocation(NavLocation);
-		
-		// FNavLocation NavLocation;
-		// UPrimitiveComponent* CollisionComp = Cast<UPrimitiveComponent>(Target->GetRootComponent());
-		// if (UBoxComponent* BoxComp = Cast<UBoxComponent>(CollisionComp))
-		// {
-		// 	
-		// 	//FVector SearchExtent = BoxComp->GetScaledBoxExtent(); // 검색 반경
-		// 	//AttackRange = FMath::Max(SearchExtent.X, SearchExtent.Z); // 앞뒤좌우
-		// 	//AttackRange *= 2.5f;
-		// 	//UE_LOG(LogTemp, Log, TEXT("Box Size: %s"), *SearchExtent.ToString());
-		//
-		// 	bool bFound = NS->ProjectPointToNavigation(Target->GetActorLocation(), NavLocation, SearchExtent);
-		// 	if (bFound)
-		// 	{
-		// 		// FAIMoveRequest MoveRequest;
-		// 		// MoveRequest.SetGoalLocation(NavLocation.Location);
-		// 		// MoveRequest.SetAcceptanceRadius(50.0f);
-		// 		// AIController->MoveTo(MoveRequest);
-		// 		AIController->MoveToLocation(NavLocation);
-		// 	}
-		// 	else
-		// 	{
-		// 		UE_LOG(LogTemp, Warning, TEXT("No valid NavMesh location near barricade!"));
-		// 	}
-		// }
+		AIController->MoveToLocation(GetRandomOffsetLocation(NavLocation));
 	}
 
 
@@ -215,12 +188,7 @@ void UZombieFSMComponent::MoveTick()
 	
 	DrawDebugLine(GetWorld(), Start, End, FColor::Magenta);
 	
-	//FCollisionQueryParams TraceParams;
-	//TraceParams.AddIgnoredActor(Me);
-
-	//bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_ZombieTarget); 
 	bool bHit = GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_ZombieTarget, FCollisionShape::MakeBox(FVector(0.5f))); 
-	
 	if (bHit && !bAttackPlaying)
 	{
 		Target = Hit.GetActor();
@@ -249,23 +217,6 @@ void UZombieFSMComponent::AttackTick()
 		Me->PlayAnimMontage(Anim->ZombieMontage, 1.f, TEXT("Attack"));
 		AIController->StopMovement();
 		bAttackPlaying = true;
-
-		// 데미지 처리
-		// if (Target == Player)
-		// {
-		// 	Player->SetDamage(Damage);
-		// }
-		// else
-		// {
-		// 	if (const auto Barricade = Cast<ABarricade>(Target))
-		// 	{
-		// 		Barricade->SetDamage(Damage);
-		// 	}
-		// 	else if (const auto DefenseTower = Cast<ADefenseTower>(Target))
-		// 	{
-		// 		DefenseTower->SetDamage(Damage);
-		// 	}
-		// }
 	}
 	else
 	{
@@ -289,10 +240,6 @@ void UZombieFSMComponent::AttackTick()
 		}
 	}
 }
-
-// void UZombieFSMComponent::DamageTick()
-// {
-// }
 
 void UZombieFSMComponent::DieTick()
 {
@@ -377,4 +324,11 @@ TObjectPtr<ADefenseTower> UZombieFSMComponent::FindClosestTower()
 		}
 	}
 	return Cast<ADefenseTower>(Closest);
+}
+
+FVector UZombieFSMComponent::GetRandomOffsetLocation(FVector Location)
+{
+	float RandomX = FMath::RandRange(-SpreadRadius, SpreadRadius);
+	float RandomY = FMath::RandRange(-SpreadRadius, SpreadRadius);
+	return Location + FVector(RandomX, RandomY, 0.0f);
 }

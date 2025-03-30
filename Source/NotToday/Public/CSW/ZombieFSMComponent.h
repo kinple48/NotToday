@@ -122,4 +122,10 @@ public:
 	//FORCEINLINE void OnDieEnd() { bDieDone = true; }
 	UPROPERTY(EditAnywhere)
 	FVector SearchExtent { FVector(30.0f, 62.0f, 100.0f)};
+
+	UPROPERTY(EditAnywhere)
+	float SpreadRadius { 5.f };
+
+private:
+	FVector GetRandomOffsetLocation(FVector Location);
 };
