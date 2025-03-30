@@ -32,6 +32,9 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UStaticMeshComponent* meshcomp;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	class UNavModifierComponent* navModComp;
+
 	//체력 시스템
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float HP;

@@ -20,5 +20,5 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	void SetupNavVolume();	
+	void UpdateNavVolume();	
 };

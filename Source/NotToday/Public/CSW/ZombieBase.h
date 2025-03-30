@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "ZombieBase.generated.h"
 
+class UBoxComponent;
+class USphereComponent;
 class UNavigationInvokerComponent;
 class UZombieAnim;
 class UItemDropComponent;
@@ -20,6 +22,7 @@ class NOTTODAY_API AZombieBase : public ACharacter
 	GENERATED_BODY()
 
 public:
+	
 	AZombieBase();
 	virtual void Tick(float DeltaTime) override;
 
@@ -42,6 +45,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ItemDrop)
 	TObjectPtr<UItemDropComponent> ItemDrop;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ItemDrop)
+	TObjectPtr<UBoxComponent> MeleeHitBox;
+	
 	void SetData(const FDataTableRowHandle& InDataTableRowHandle);
 	FORCEINLINE FEnemyTableRow* GetData() const { return Data; }
+
+	// 근접공격 히트박스 충돌함수
+	UFUNCTION()
+	void OnMeleeHitBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+								   const FHitResult& SweepResult);
 };

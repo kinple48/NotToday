@@ -13,5 +13,6 @@ UCLASS()
 class NOTTODAY_API ANormalZombie : public AZombieBase
 {
 	GENERATED_BODY()
-	
+public:
+	ANormalZombie();
 };

@@ -4,8 +4,11 @@
 #include "CSW/ZombieBase.h"
 
 #include "AIController.h"
+#include "Barricade.h"
+#include "DefenseTower.h"
 #include "MainPlayer.h"
 #include "NavigationInvokerComponent.h"
+#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Actor.h"
 #include "CSW/EnemyTableRow.h"
@@ -38,7 +41,17 @@ AZombieBase::AZombieBase()
 	// 네비게이션 인보커
 	NavInvoker = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvoker"));
 	NavInvoker->SetGenerationRadii(3000.f, 3500.f);
+
+	// 근접공격 히트 박스
+	MeleeHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("MeleeHitBox"));
+	MeleeHitBox->SetRelativeScale3D(FVector(0.6f));
+	MeleeHitBox->SetCollisionObjectType(ECC_ZombieHitBox);
+	MeleeHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 우선 꺼둔다
 	
+	MeleeHitBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+	MeleeHitBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); // Pawn
+	MeleeHitBox->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap); // WorldDynamic
+	MeleeHitBox->OnComponentBeginOverlap.AddDynamic(this, &AZombieBase::OnMeleeHitBoxBeginOverlap);
 }
 
 void AZombieBase::OnConstruction(const FTransform& Transform)
@@ -95,10 +108,14 @@ void AZombieBase::BeginPlay()
 	}
 }
 
+void AZombieBase::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
 void AZombieBase::SetData(const FDataTableRowHandle& InDataTableRowHandle)
 {
 	//PRINT_LOG(CSW, TEXT("AZombieBase::SetData"));
-
 	if (InDataTableRowHandle.IsNull()) { return; }
 	DTRowHandle = InDataTableRowHandle;
 	if (!DTRowHandle.DataTable)
@@ -123,8 +140,22 @@ void AZombieBase::SetData(const FDataTableRowHandle& InDataTableRowHandle)
 	UE_LOG(LogTemp, Warning, TEXT("HP: %d, Damage: %d"), Data->MaxHP, Data->Damage);
 }
 
-void AZombieBase::Tick(float DeltaTime)
+void AZombieBase::OnMeleeHitBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	Super::Tick(DeltaTime);
-
+	// 데미지 처리
+	if (const auto Player = Cast<AMainPlayer>(OtherActor))
+	{
+		Player->SetDamage(FSM->Damage);
+	}
+	else if (const auto Barricade = Cast<ABarricade>(OtherActor))
+	{
+		Barricade->SetDamage(FSM->Damage);
+	}
+	else if (const auto DefenseTower = Cast<ADefenseTower>(OtherActor))
+	{
+		DefenseTower->SetDamage(FSM->Damage);
+	}
+	MeleeHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
+

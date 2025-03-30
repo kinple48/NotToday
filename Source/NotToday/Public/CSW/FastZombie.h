@@ -14,4 +14,6 @@ class NOTTODAY_API AFastZombie : public AZombieBase
 {
 	GENERATED_BODY()
 	
+public:
+	AFastZombie();
 };

@@ -24,7 +24,7 @@ enum class EZombieState : uint8
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class NOTTODAY_API UZombieFSMComponent : public UActorComponent, public IEnemyInterface
+class NOTTODAY_API UZombieFSMComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -64,8 +64,8 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	float DistToTarget;
 	
-	virtual void SetTarget(TObjectPtr<AActor> InTarget) override;
-	virtual TObjectPtr<AActor> GetTarget() const override;
+	//virtual void SetTarget(TObjectPtr<AActor> InTarget) override;
+	//virtual TObjectPtr<AActor> GetTarget() const override;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = FSM)
 	EZombieState State;
@@ -103,7 +103,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = FSM)
 	float AttackDelayTime;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = FSM)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = FSM)
 	bool bAttackPlaying = false;
 
 	UPROPERTY(EditAnywhere, Category = FSM)
@@ -116,8 +116,10 @@ public:
 
 	// 사망
 	UPROPERTY(EditAnywhere, Category = FSM)
-	float DieDestoryTime {5.f};
+	float DieDestoryTime {1.f};
 	//bool bDieDone { false };
 	
 	//FORCEINLINE void OnDieEnd() { bDieDone = true; }
+	UPROPERTY(EditAnywhere)
+	FVector SearchExtent { FVector(30.0f, 62.0f, 100.0f)};
 };

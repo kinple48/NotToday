@@ -14,17 +14,17 @@ void AZombieNavVolume::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//SetupNavVolume();
+	//UpdateNavVolume();
 }
 
-void AZombieNavVolume::SetupNavVolume()
+void AZombieNavVolume::UpdateNavVolume()
 {
 	UNavigationSystemV1* ns = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 	if (ns)
 	{
 		ns->OnNavigationBoundsUpdated(this);
 
-		ns->Build();
+		//ns->Build();
 	}
 }
 

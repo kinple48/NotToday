@@ -45,7 +45,10 @@ void UZombieFSMComponent::BeginPlay()
 void UZombieFSMComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if (Me && Me->Controller && !AIController)
+	if (!Me || !Me->Controller)
+		return;
+	
+	if (!AIController)
 	{
 		AController* Controller = Me->Controller;
 		if (Controller)
@@ -62,16 +65,6 @@ void UZombieFSMComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 		case EZombieState::Attack: { AttackTick(); } break;
 		case EZombieState::Die: { DieTick(); } break;
 	}
-}
-
-void UZombieFSMComponent::SetTarget(TObjectPtr<AActor> InTarget)
-{
-	Target = InTarget;
-}
-
-TObjectPtr<AActor> UZombieFSMComponent::GetTarget() const
-{
-	return Target;
 }
 
 void UZombieFSMComponent::SetState(EZombieState InState)
@@ -110,6 +103,7 @@ void UZombieFSMComponent::MoveTick()
 	DrawDebugCircle(GetWorld(), Me->GetActorLocation() + FVector::UpVector*4, AttackRange, 20, FColor::Red);
 	
 	Target = nullptr;
+	FNavLocation NavLocation;
 	
 	// 1. 타겟을 설정한다
 	if (DistToPlayer <= ChaseRange) // 플레이어가 추적가능 거리 이내면,
@@ -127,53 +121,40 @@ void UZombieFSMComponent::MoveTick()
 		{
 			Target = Player; // 플레이어를 타겟으로 한다
 		}
-		else // 플레이어 위치까지 길찾기 실패...
-		{
-			TObjectPtr<ADefenseTower> ClosestTurret = FindClosestTower();
-			if (ClosestTurret)
-			{
-				float DistToTurret = FVector::Distance(Me->GetActorLocation(), ClosestTurret->GetActorLocation());
-				if (DistToTurret <= ChaseRange)
-				{
-					Target = ClosestTurret;
-				}
-			}
-			
-			if (!Target)
-			{
-				TObjectPtr<ABarricade> ClosestBarricade = FindClosestBarricade();
-				if (ClosestBarricade)
-				{
-					float DistToBarricade = FVector::Distance(Me->GetActorLocation(), ClosestBarricade->GetActorLocation());
-					if (DistToBarricade <= ChaseRange)
-					{
-						Target = ClosestBarricade;
-					}
-				}
-				
-			}
-		}
 	}
-	else // 플레이어가 추적가능 거리 밖이면
+	
+	if (!Target)  // 플레이어 위치까지 길찾기 실패...
 	{
 		TObjectPtr<ADefenseTower> ClosestTurret = FindClosestTower();
 		if (ClosestTurret)
 		{
 			float DistToTurret = FVector::Distance(Me->GetActorLocation(), ClosestTurret->GetActorLocation());
-			if (ClosestTurret && DistToTurret <= ChaseRange)
+			if (DistToTurret <= ChaseRange)
 			{
-				Target = ClosestTurret;
+				// 터렛으로 갈 수 있는지 확인한다.
+				bool bFound = NS->ProjectPointToNavigation(ClosestTurret->GetActorLocation(), NavLocation, SearchExtent/*SearchExtent * 2.f*/);
+				if (bFound)
+				{
+					//AIController->MoveToLocation(NavLocation);
+					Target = ClosestTurret;
+				}
 			}
 		}
-		
-		if (!Target)
+	}
+	
+	if (!Target)
+	{
+		TObjectPtr<ABarricade> ClosestBarricade = FindClosestBarricade();
+		if (ClosestBarricade )
 		{
-			TObjectPtr<ABarricade> ClosestBarricade = FindClosestBarricade();
-			if (ClosestBarricade)
+			float DistToBarricade = FVector::Distance(Me->GetActorLocation(), ClosestBarricade->GetActorLocation());
+			if (DistToBarricade <= ChaseRange)
 			{
-				float DistToBarricade = FVector::Distance(Me->GetActorLocation(), ClosestBarricade->GetActorLocation());
-				if (DistToBarricade <= ChaseRange)
+				// 바리케이드로 갈 수 있는지 확인한다.
+				bool bFound = NS->ProjectPointToNavigation(ClosestBarricade->GetActorLocation(), NavLocation, SearchExtent/*SearchExtent * 2.f*/);
+				if (bFound)
 				{
+					//AIController->MoveToLocation(NavLocation);
 					Target = ClosestBarricade;
 				}
 			}
@@ -184,9 +165,9 @@ void UZombieFSMComponent::MoveTick()
 	if (!Target)
 	{
 		Target = Player;
-		
 		if (!Target)
 		{
+			PRINT_LOG(CSW, TEXT("No Target Found"));
 			return;
 		}
 	}
@@ -198,52 +179,51 @@ void UZombieFSMComponent::MoveTick()
 	}
 	else
 	{
-		FNavLocation NavLocation;
-		UPrimitiveComponent* CollisionComp = Cast<UPrimitiveComponent>(Target->GetRootComponent());
-		if (UBoxComponent* BoxComp = Cast<UBoxComponent>(CollisionComp))
-		{
-			
-			FVector SearchExtent = BoxComp->GetScaledBoxExtent();; // 검색 반경
-			//AttackRange = FMath::Max(SearchExtent.X, SearchExtent.Z); // 앞뒤좌우
-			//AttackRange *= 2.5f;
-			UE_LOG(LogTemp, Log, TEXT("Box Size: %s"), *SearchExtent.ToString());
-
-			bool bFound = NS->ProjectPointToNavigation(Target->GetActorLocation(), NavLocation, SearchExtent * 2.f);
-			if (bFound)
-			{
-				FAIMoveRequest MoveRequest;
-				MoveRequest.SetGoalLocation(NavLocation.Location);
-				MoveRequest.SetAcceptanceRadius(50.0f);
-				AIController->MoveTo(MoveRequest);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("No valid NavMesh location near barricade!"));
-			}
-		}
+		AIController->MoveToLocation(NavLocation);
+		
+		// FNavLocation NavLocation;
+		// UPrimitiveComponent* CollisionComp = Cast<UPrimitiveComponent>(Target->GetRootComponent());
+		// if (UBoxComponent* BoxComp = Cast<UBoxComponent>(CollisionComp))
+		// {
+		// 	
+		// 	//FVector SearchExtent = BoxComp->GetScaledBoxExtent(); // 검색 반경
+		// 	//AttackRange = FMath::Max(SearchExtent.X, SearchExtent.Z); // 앞뒤좌우
+		// 	//AttackRange *= 2.5f;
+		// 	//UE_LOG(LogTemp, Log, TEXT("Box Size: %s"), *SearchExtent.ToString());
+		//
+		// 	bool bFound = NS->ProjectPointToNavigation(Target->GetActorLocation(), NavLocation, SearchExtent);
+		// 	if (bFound)
+		// 	{
+		// 		// FAIMoveRequest MoveRequest;
+		// 		// MoveRequest.SetGoalLocation(NavLocation.Location);
+		// 		// MoveRequest.SetAcceptanceRadius(50.0f);
+		// 		// AIController->MoveTo(MoveRequest);
+		// 		AIController->MoveToLocation(NavLocation);
+		// 	}
+		// 	else
+		// 	{
+		// 		UE_LOG(LogTemp, Warning, TEXT("No valid NavMesh location near barricade!"));
+		// 	}
+		// }
 	}
 
-	// 3. 타켓을 향해 바라본다
-	FVector Dir = (Target->GetActorLocation() - Me->GetActorLocation()).GetSafeNormal();
-	Dir.Z = 0.f;
-	Me->SetActorRotation(FRotator(0.f, Dir.Rotation().Yaw, 0.f));
-	
-	// 4. 타겟을 공격할 수 있는지 확인한다
+
+	// 3. 타겟을 공격할 수 있는지 확인한다
 	FHitResult Hit;
 	FVector Start = Me->GetActorLocation() + Me->GetActorUpVector();
-	FVector End = Start + Me->GetActorForwardVector() * AttackRange;
+	FVector End = Start + (Target->GetActorLocation() - Me->GetActorLocation()).GetSafeNormal() * AttackRange;
 	
 	DrawDebugLine(GetWorld(), Start, End, FColor::Magenta);
 	
-	FCollisionQueryParams TraceParams;
-	TraceParams.AddIgnoredActor(Me);
+	//FCollisionQueryParams TraceParams;
+	//TraceParams.AddIgnoredActor(Me);
 
-	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_GameTraceChannel4, TraceParams); // ZombieTarget 채널
-	//if (bHit)
-	//	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("asdasdadasd"));
+	//bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_ZombieTarget); 
+	bool bHit = GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_ZombieTarget, FCollisionShape::MakeBox(FVector(0.5f))); 
 	
-	if (bHit && !bAttackPlaying && !Hit.GetActor()->IsA<AZombieBase>())
+	if (bHit && !bAttackPlaying)
 	{
+		Target = Hit.GetActor();
 		SetState(EZombieState::Attack);
 		ElapsedTime = AttackDelayTime; // 바로 공격 시작
 	}
@@ -251,7 +231,12 @@ void UZombieFSMComponent::MoveTick()
 
 void UZombieFSMComponent::AttackTick()
 {
-	// 3. 타켓을 향해 바라본다
+	if (!Target)
+	{
+		SetState(EZombieState::Move);
+		return;
+	}
+	// 타켓을 향해 바라본다
 	FVector Dir = (Target->GetActorLocation() - Me->GetActorLocation()).GetSafeNormal();
 	Dir.Z = 0.f;
 	Me->SetActorRotation(FRotator(0.f, Dir.Rotation().Yaw, 0.f));
@@ -264,34 +249,37 @@ void UZombieFSMComponent::AttackTick()
 		Me->PlayAnimMontage(Anim->ZombieMontage, 1.f, TEXT("Attack"));
 		AIController->StopMovement();
 		bAttackPlaying = true;
-		if (Target == Player)
-		{
-			Player->SetDamage(Damage);
-		}
-		else
-		{
-			if (const auto Barricade = Cast<ABarricade>(Target))
-			{
-				Barricade->SetDamage(Damage);
-			}
-			else if (const auto DefenseTower = Cast<ADefenseTower>(Target))
-			{
-				DefenseTower->SetDamage(Damage);
-			}
-		}
 
-		//SetState(EZombieState::Move);
+		// 데미지 처리
+		// if (Target == Player)
+		// {
+		// 	Player->SetDamage(Damage);
+		// }
+		// else
+		// {
+		// 	if (const auto Barricade = Cast<ABarricade>(Target))
+		// 	{
+		// 		Barricade->SetDamage(Damage);
+		// 	}
+		// 	else if (const auto DefenseTower = Cast<ADefenseTower>(Target))
+		// 	{
+		// 		DefenseTower->SetDamage(Damage);
+		// 	}
+		// }
 	}
 	else
 	{
 		DistToTarget = FVector::Distance(Target->GetActorLocation(), Me->GetActorLocation());
 		if (DistToTarget > AttackRange + 10.f && !bAttackPlaying) // 공격범위 벗어남 && 공격중이 아님
 		{
+			PRINT_LOG(CSW, TEXT("DistToTarget > AttackRange + 10.f && !bAttackPlaying"));
 			UAnimInstance* AnimInstance = Me->GetMesh()->GetAnimInstance();
 			if (AnimInstance)
 			{
+				PRINT_LOG(CSW, TEXT("if (AnimInstance)"));
 				if (AnimInstance->Montage_IsPlaying(Anim->ZombieMontage))
 				{
+					PRINT_LOG(CSW, TEXT("Montage_IsPlaying"));
 					GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, TEXT("Montage_Stop"));
 					AnimInstance->Montage_Stop(0.15f, Anim->ZombieMontage);
 				};

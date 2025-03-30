@@ -16,3 +16,6 @@ DECLARE_LOG_CATEGORY_EXTERN(CSW, Log, All);
 
 // fmt포멧을 만들어서 매크로 호출 시, 전달한 인자들이 해당 포멧에 사용됨.
 #define PRINT_LOG(Category, fmt, ...) UE_LOG(Category, Warning, TEXT("%s %s"), *CALLINFO, *FString::Printf(fmt, ##__VA_ARGS__))
+
+#define ECC_ZombieTarget ECC_GameTraceChannel4
+#define ECC_ZombieHitBox ECC_GameTraceChannel5

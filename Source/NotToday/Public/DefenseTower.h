@@ -29,6 +29,9 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	class UStaticMeshComponent* meshcomp;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	class UNavModifierComponent* navModComp;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float HP;
 

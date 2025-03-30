@@ -2,11 +2,19 @@
 
 
 #include "DefenseTower.h"
+
+#include "EngineUtils.h"
+#include "NavigationSystem.h"
+#include "NavModifierComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "CSW/ZombieBase.h"
 #include "CSW/ZombieFSMComponent.h"
+#include "CSW/ZombieNavVolume.h"
+#include "NavAreas/NavArea_Obstacle.h"
+#include "NotToday/NotToday.h"
 
+class AZombieNavVolume;
 // Sets default values
 ADefenseTower::ADefenseTower()
 {
@@ -15,16 +23,22 @@ ADefenseTower::ADefenseTower()
 
 	boxcomp = CreateDefaultSubobject<UBoxComponent>( TEXT( "boxcomp" ) );
 	boxcomp->SetupAttachment( RootComponent );
-	boxcomp->SetCollisionResponseToChannel(ECC_GameTraceChannel4, ECR_Block); // ZombieTarget 채널
+	boxcomp->SetCollisionResponseToChannel(ECC_ZombieTarget, ECR_Block); // ZombieTarget 채널
+	boxcomp->SetCollisionResponseToChannel(ECC_ZombieHitBox, ECR_Overlap); // Zombie의 공격 히트박스 
 
 	meshcomp = CreateDefaultSubobject<UStaticMeshComponent>( TEXT( "meshcomp" ) );
 	meshcomp->SetupAttachment( boxcomp );
 	meshcomp->SetCollisionEnabled( ECollisionEnabled::NoCollision );
-	meshcomp->SetCollisionResponseToChannel(ECC_GameTraceChannel4, ECR_Block); // ZombieTarget 채널
+	meshcomp->SetCollisionResponseToChannel(ECC_ZombieTarget, ECR_Block); // ZombieTarget 채널
+	meshcomp->SetCollisionResponseToChannel(ECC_ZombieHitBox, ECR_Overlap); // Zombie의 공격 히트박스 
 
 	spherecomp = CreateDefaultSubobject<USphereComponent>( TEXT( "spherecomp" ) );
 	spherecomp->SetupAttachment( boxcomp );
 	spherecomp->SetSphereRadius( 500 );
+
+	navModComp = CreateDefaultSubobject<UNavModifierComponent>( TEXT( "navModComp" ) );
+	navModComp->SetAreaClass(UNavArea_Obstacle::StaticClass());
+	navModComp->FailsafeExtent = FVector(14.f, 14.f, 100.f);
 
 	ConstructorHelpers::FObjectFinder<UStaticMesh>Temp_Object( TEXT( "/Script/Engine.StaticMesh'/Game/LJW/Asset/defence-tower/source/StaticMesh.StaticMesh'" ) );
 	if (Temp_Object.Succeeded())
@@ -120,6 +134,10 @@ void ADefenseTower::SetDamage(int32 damage)
 
 	if (HP <= 0)
 	{
+		for (TActorIterator<AZombieNavVolume> It(GetWorld()); It; ++It)
+		{
+			It->UpdateNavVolume(); // 첫 번째 AZombieNavVolume을 반환
+		}
 		this->Destroy();
 	}
 }
