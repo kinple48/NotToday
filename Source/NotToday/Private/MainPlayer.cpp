@@ -567,10 +567,10 @@ void AMainPlayer::SetDamage( int32 damage )
 		if (AnimInstance)
 		{
 			anim->deadstate = true;
+			APlayerController* playercontroller = GetWorld()->GetFirstPlayerController();
+			playercontroller->GetPawn()->DisableInput( playercontroller );
 		}
 	}
-	
-
 }
 
 void AMainPlayer::SetReload( )
