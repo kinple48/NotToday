@@ -11,7 +11,7 @@ public class NotToday : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG",
-			"NavigationSystem", "AIModule"
+			"NavigationSystem", "AIModule", "HeadMountedDisplay"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

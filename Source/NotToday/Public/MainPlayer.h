@@ -27,6 +27,13 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 public:
+	UPROPERTY(VisibleAnywhere, Category = "MotionController")
+	class UMotionControllerComponent* LeftHand;
+
+	UPROPERTY(VisibleAnywhere, Category = "MotionController")
+	class UMotionControllerComponent* RightHand;
+
+
 	UPROPERTY(VisibleAnywhere)
 	class UCameraComponent* VRCamera;
 
@@ -46,6 +53,25 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	class UInputAction* IA_Mouse;
 
+	//------------------------------VR-----------------------------------------------------
+	
+	//Turn
+	UPROPERTY( EditDefaultsOnly , Category = Input )
+	class UInputAction* IA_Turn;
+	void Turn( const struct FInputActionValue& InputValue );
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Setting)
+	float RotationSpeed = 50.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Settings")
+	float RotationInterpSpeed = 5.0f;
+
+	//UI
+	UPROPERTY(EditAnywhere, Category="UI")
+	class UWidgetComponent* WidgetComp;
+	class UDay_UI* DayUIInstance;
+	class UNight_UI* NightUIInstance;
+
+	//--------------------------------------------------------------------------------------
+
 public:
 	UPROPERTY(EditDefaultsOnly, Category = Input)
 	class UInputAction* IA_GunShot;
@@ -53,16 +79,29 @@ public:
 	void GunShotStart(const struct FInputActionValue& InputValue);
 	void GunShotEnd(const struct FInputActionValue& InputValue);
 	void GunShot();
+
+	UPROPERTY(VisibleAnywhere)
+	class UChildActorComponent* CrosshairComp;
+
+	void DrawCrossHair();
 	float CurrentTime = 0.5f;
 	float MakeTime = 0.5f;
 
 	UPROPERTY(EditAnywhere, Category = BulletEffact)
 	class UParticleSystem* BulletEffactFactory;
 
+	UPROPERTY(EditAnywhere, Category = BulletEffact)
+	class UParticleSystem* ObjectEffectFactory;
+
 	UPROPERTY()
 	class USoundBase* BulletSound;
 
+	UPROPERTY()
+	class USoundBase* ObjectSound;
+
 	float state = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float walkspeed = 600.f;
 
 	UPROPERTY()
@@ -95,14 +134,13 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ADefenseTower> AutoTurretFactory;
 
-	void RotateToMouseCursor();
 	void SpawnObject();
 
 	UPROPERTY(EditDefaultsOnly)
 	class USkeletalMeshComponent* GunMesh;
 
 	UPROPERTY(EditAnywhere)
-	int32 CashData = 30000;
+	int32 CashData = 9000;
 
 	UPROPERTY(EditAnywhere)
 	int32 ScoreData = 0;
@@ -138,10 +176,11 @@ public:
 
 
 	//체력 시스템
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float HP;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float HPMax = 100.f;
+	float HPMax = 10.f;
 
 	void SetDamage( int32 damage );
 
@@ -165,4 +204,35 @@ public:
 	UFUNCTION()
 	void NightState();
 
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	class UInputAction* IA_Buy;
+	void Buy( const struct FInputActionValue& InputValue );
+
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	class UInputAction* IA_NextLevel;
+	void NextLevel( const struct FInputActionValue& InputValue );
+
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	class UInputAction* IA_Place;
+	void Place( const struct FInputActionValue& InputValue );
+
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	class UInputAction* IA_Remove;
+	void Remove( const struct FInputActionValue& InputValue );
+
+	UPROPERTY(EditAnywhere)
+	bool ObjectType = true;
+
+	void WoodenBarricade();
+	void AutoTurret();
+
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	class UInputAction* IA_Object;
+	void Object( const struct FInputActionValue& InputValue );
+	FTimerHandle TimerHandle;
+
+	float EaseOutBounce( float x );
+	float FlippedEaseOutBounce( float x );
+	void ApplyBouncingEffect( AActor* TargetActor , FVector SpawnLocation , float BounceHeight , float Duration );
+	
 };

@@ -26,7 +26,8 @@ void ADropHPItem::Apply(AMainPlayer* Player)
         auto MainGameMode = Cast<AMainGameModeBase>(GameMode);
         if (MainGameMode)
         {
-            MainGameMode->Night_UI->SetHP(Player->HP, Player->HPMax);
+            //MainGameMode->Night_UI->SetHP(Player->HP, Player->HPMax);
+            Player->NightUIInstance->SetHP( Player->HP , Player->HPMax );
         }
     }
     Super::Apply(Player);

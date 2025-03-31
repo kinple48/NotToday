@@ -17,4 +17,7 @@ class NOTTODAY_API UPlayerAnimInstance : public UAnimInstance
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = PlayerAnimInstance)
 	float speed;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = PlayerAnimInstance)
+	bool deadstate = false;
 };

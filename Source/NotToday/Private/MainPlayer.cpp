@@ -24,6 +24,13 @@
 #include "CSW/Item/DropItem.h"
 #include "MainGameStateBase.h"
 #include "Components/BoxComponent.h"
+#include "MotionControllerComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/ChildActorComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Night_UI.h"
+#include "UObject/UObjectGlobals.h"
+#include "PlayerAnimInstance.h"
 
 AMainPlayer::AMainPlayer()
 {
@@ -32,6 +39,14 @@ AMainPlayer::AMainPlayer()
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel4, ECR_Block); // ZombieTarget 채널
 
+	LeftHand = CreateDefaultSubobject<UMotionControllerComponent>( TEXT( "LeftHand" ) );
+	LeftHand->SetTrackingMotionSource( TEXT( "Left" ) );
+	LeftHand->SetupAttachment( RootComponent );
+
+	RightHand = CreateDefaultSubobject<UMotionControllerComponent>( TEXT( "RightHand" ) );
+	RightHand->SetTrackingMotionSource( TEXT( "Right" ) );
+	RightHand->SetupAttachment( RootComponent );
+
 	GunMesh = CreateDefaultSubobject<USkeletalMeshComponent>( TEXT( "GunMesh" ));
 	GunMesh->SetupAttachment( GetMesh() , TEXT( "RightHandSocket" ) );
 
@@ -39,7 +54,7 @@ AMainPlayer::AMainPlayer()
 	if (TempGun.Succeeded())
 	{
 		GunMesh->SetSkeletalMesh( TempGun.Object );
-		GunMesh->SetRelativeLocationAndRotation( FVector(-135.f, 0.f, 725.f ) , FRotator( 80.f, 85.f, 270.f ) );
+		GunMesh->SetRelativeLocationAndRotation( FVector( 1.f , -17.f , 7.f ) , FRotator( 79.f , 90.f , -86.f ) );
 	}
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>( TEXT( "SpringArmComp" ) );
@@ -50,9 +65,16 @@ AMainPlayer::AMainPlayer()
 	VRCamera->SetupAttachment( SpringArmComp );
 	VRCamera->bUsePawnControlRotation = false;
 
+	WidgetComp = CreateDefaultSubobject<UWidgetComponent>( TEXT( "WidgetComp" ) );
+	WidgetComp->AttachToComponent( VRCamera , FAttachmentTransformRules::KeepWorldTransform );
+	FVector DirectionUI = VRCamera->GetForwardVector();
+	WidgetComp->SetWorldRotation( FRotationMatrix::MakeFromX( -DirectionUI ).Rotator() );
+
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+
 
 	// IMC 설정
 	ConstructorHelpers::FObjectFinder<UInputMappingContext>TempIMC(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/LJW/Input/IMC_Player.IMC_Player'"));
@@ -88,12 +110,63 @@ AMainPlayer::AMainPlayer()
 	if (TempSound.Succeeded())
 	{
 		BulletSound = TempSound.Object;
-	}                                                                                                                                                                                                                                                                                                                                                                             
+	}
+
+	CrosshairComp = CreateDefaultSubobject<UChildActorComponent>( TEXT( "CrosshairComp" ) );
+	CrosshairComp->SetupAttachment( RootComponent );
+	ConstructorHelpers::FClassFinder<AActor> TempCrosshair( TEXT( "/Script/Engine.Blueprint'/Game/LJW/Blueprint/BP_CrossHair.BP_CrossHair_C'" ) );
+	if (TempCrosshair.Succeeded())
+	{
+		CrosshairComp->SetChildActorClass( TempCrosshair.Class );
+	}
+
+	ConstructorHelpers::FObjectFinder<UInputAction>TempIA_Buy( TEXT( "/Script/EnhancedInput.InputAction'/Game/LJW/Input/IA_Buy.IA_Buy'" ) );
+	if (TempIA_Buy.Succeeded())
+	{
+		IA_Buy = TempIA_Buy.Object;
+	}
+
+	ConstructorHelpers::FObjectFinder<UInputAction>TempIA_NextLevel( TEXT( "/Script/EnhancedInput.InputAction'/Game/LJW/Input/IA_NextLevel.IA_NextLevel'" ) );
+	if (TempIA_NextLevel.Succeeded())
+	{
+		IA_NextLevel = TempIA_NextLevel.Object;
+	}
+
+	ConstructorHelpers::FObjectFinder<UInputAction>TempIA_Place( TEXT( "/Script/EnhancedInput.InputAction'/Game/LJW/Input/IA_Place.IA_Place'" ) );
+	if (TempIA_Place.Succeeded())
+	{
+		IA_Place = TempIA_Place.Object;
+	}
+
+	ConstructorHelpers::FObjectFinder<UInputAction>TempIA_Remove( TEXT( "/Script/EnhancedInput.InputAction'/Game/LJW/Input/IA_Remove.IA_Remove'" ) );
+	if (TempIA_Remove.Succeeded())
+	{
+		IA_Remove = TempIA_Remove.Object;
+	}
+
+	ConstructorHelpers::FObjectFinder<UInputAction>TempIA_Object( TEXT( "/Script/EnhancedInput.InputAction'/Game/LJW/Input/IA_Object.IA_Object'" ) );
+	if (TempIA_Object.Succeeded())
+	{
+		IA_Object = TempIA_Object.Object;
+	}
+
 }
 
 void AMainPlayer::BeginPlay()
 {
 	Super::BeginPlay();
+	CombatState = true;
+	UClass* WidgetClass = LoadObject<UClass>( nullptr , TEXT( "/Script/UMGEditor.WidgetBlueprint'/Game/LJW/UI/BP_Night_UI.BP_Night_UI_C'" ) );
+	if (WidgetClass)
+	{
+		WidgetComp->SetWidgetClass( WidgetClass );
+		WidgetComp->InitWidget();
+		NightUIInstance = Cast<UNight_UI>( WidgetComp->GetUserWidgetObject() );
+		WidgetComp->SetVisibility( true );
+		WidgetComp->SetDrawSize( FVector2D( 1280 , 720 ) );
+		WidgetComp->SetWorldRotation( WidgetComp->GetComponentRotation() + FRotator(0.f , 0.f , 0.f));
+		WidgetComp->SetRelativeLocation( VRCamera->GetForwardVector() * 1000 + FVector( 0.f , 0.f , 400.f ));
+	}
 	HP = HPMax;
 	Reload = ReloadMax;
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMainPlayer::OnSpawnPointBeginOverlap);
@@ -116,24 +189,27 @@ void AMainPlayer::BeginPlay()
 void AMainPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
 	if (CombatState)
 	{
-		RotateToMouseCursor();
+		//RotateToMouseCursor();
+		DrawCrossHair();
 		CurrentTime += DeltaTime;
 		if (bGunShot && Reload > 0 && CurrentTime >= MakeTime)
 		{
 			GunShot();
 			CurrentTime = 0.f;
 		}
-		if (Reload <= 0 && CurrentTime >= ReloadTime)
+		else if (Reload <= 0 && CurrentTime >= ReloadTime)
 		{
 			Reload = ReloadMax;
 			GameMode->SetReload( Reload , ReloadMax );
 			CurrentTime = 0.f;
 		}
 	}
-
-	Direction = FTransform( GetControlRotation() ).TransformVector( Direction );
+	
+	
+	//Direction = FTransform( GetControlRotation() ).TransformVector( Direction );
 	// Direction 초기화 (다음 Tick에서 입력이 없으면 멈춤)
 
 	AddMovementInput( Direction );
@@ -161,6 +237,12 @@ void AMainPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		InputSystem->BindAction(IA_Move, ETriggerEvent::Triggered, this, &AMainPlayer::Move);
 		InputSystem->BindAction(IA_GunShot, ETriggerEvent::Started, this, &AMainPlayer::GunShotStart);
 		InputSystem->BindAction(IA_GunShot, ETriggerEvent::Completed, this, &AMainPlayer::GunShotEnd);
+		InputSystem->BindAction( IA_Turn , ETriggerEvent::Triggered , this , &AMainPlayer::Turn );
+		InputSystem->BindAction( IA_Buy , ETriggerEvent::Started , this , &AMainPlayer::Buy );
+		InputSystem->BindAction( IA_NextLevel , ETriggerEvent::Started , this , &AMainPlayer::NextLevel );
+		InputSystem->BindAction( IA_Place , ETriggerEvent::Started , this , &AMainPlayer::Place );
+		InputSystem->BindAction( IA_Remove , ETriggerEvent::Started , this , &AMainPlayer::Remove );
+		InputSystem->BindAction( IA_Object , ETriggerEvent::Started , this , &AMainPlayer::Object );
 	}
 }
 
@@ -170,6 +252,32 @@ void AMainPlayer::Move(const struct FInputActionValue& InputValue)
 
 	Direction.X = value.X;
 	Direction.Y = value.Y;
+}
+
+void AMainPlayer::Turn( const struct FInputActionValue& InputValue )
+{
+	// 1. Thumbstick X와 Y 값 가져오기
+	FVector2D value = InputValue.Get<FVector2D>();
+
+	// 2. Swizzle 처리: Unreal 좌표계에 맞게 X와 Y를 교환
+	float X = value.X; // Y축을 X축으로 사용
+	float Y = value.Y; // X축을 Y축으로 사용
+
+	// 4. Swizzled 값을 기반으로 Z축(Yaw) 각도 계산
+	float TargetYaw = FMath::Atan2( X , Y ) * 180.0f / PI;
+
+	// 5. Unreal 좌표계 보정 (-180° ~ 180° 범위로 제한)
+	TargetYaw = FMath::Fmod( TargetYaw + 360.0f , 360.0f );
+	if (TargetYaw > 180.0f) TargetYaw -= 360.0f;
+
+	// 6. 현재 캐릭터 회전값 가져오기
+	FRotator CurrentRotation = GetActorRotation();
+
+	// 7. 부드러운 회전 적용 (Yaw 값만 변경)
+	FRotator SmoothRotation = FMath::RInterpTo(CurrentRotation, FRotator( 0.0f , TargetYaw , 0.0f ), GetWorld()->GetDeltaSeconds(), RotationSpeed);
+
+	// 8. 새로운 회전값 적용
+	SetActorRotation( SmoothRotation );
 }
 
 void AMainPlayer::GunShotStart(const struct FInputActionValue& InputValue)
@@ -185,30 +293,8 @@ void AMainPlayer::GunShotEnd(const struct FInputActionValue& InputValue)
 
 void AMainPlayer::GunShot()
 {
-	RotateToMouseCursor();
-	//GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Red, TEXT("gunshot"));
 	FVector StartPoint = GunMesh->GetComponentLocation();
-	FVector ForwardVector;
-	APlayerController* PlayerController = Cast<APlayerController>( GetController() );
-	if (PlayerController)
-	{
-		FHitResult HitResult;
-
-		// 마우스 포인터가 가리키는 위치를 가져오기
-		if (PlayerController->GetHitResultUnderCursor( ECC_Visibility , false , HitResult ))
-		{
-			FVector MouseLocation = HitResult.Location;
-			FVector TargetLocation = GunMesh->GetComponentLocation();
-			FVector LookAtDirection = (MouseLocation - TargetLocation).GetSafeNormal2D();
-			float TargetYaw = FMath::Atan2( LookAtDirection.Y , LookAtDirection.X ) * 180.0f / PI;
-			FRotator CurrentRotation = GetActorRotation();
-			CurrentRotation.Yaw = TargetYaw;
-			ForwardVector = CurrentRotation.Vector(); // Forward 방향 벡터 생성
-		}
-	}
-
-	FVector EndPoint = StartPoint + ForwardVector * 700;
-
+	FVector EndPoint = StartPoint + GunMesh->GetRightVector()* 1000;
 	FHitResult hitInfo;
 	FCollisionQueryParams params;
 	params.AddIgnoredActor(this);
@@ -220,7 +306,7 @@ void AMainPlayer::GunShot()
 
 	// 발사 이펙트
 	FTransform BulletTrans;
-	BulletTrans.SetLocation(StartPoint);
+	BulletTrans.SetLocation(GunMesh->GetComponentLocation());
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), BulletEffactFactory, BulletTrans);
 
 	if (bHit)
@@ -235,6 +321,31 @@ void AMainPlayer::GunShot()
 	SetReload();
 	// 선그리기
 	DrawDebugLine(GetWorld(), StartPoint, EndPoint, FColor::White, false, 1, 0, 1);
+}
+
+void AMainPlayer::DrawCrossHair()
+{
+	FVector StartPos = GunMesh->GetComponentLocation();
+	FVector EndPos = StartPos + GunMesh->GetRightVector() * 1000;
+	FHitResult hitInfo;
+	FCollisionQueryParams params;
+	params.AddIgnoredActor( this );
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel( hitInfo , StartPos , EndPos , ECC_Visibility , params );
+
+	AActor* HitActor = hitInfo.GetActor();
+	AZombieBase* zombie = Cast<AZombieBase>( HitActor );
+
+	if (bHit && zombie)
+	{
+		CrosshairComp->SetWorldLocation( hitInfo.Location );
+		//DrawDebugLine( GetWorld() , StartPos , hitInfo.Location , FColor::Red , false , 1 , 0 , 1 );
+	}
+	else
+	{
+		CrosshairComp->SetWorldLocation( EndPos );
+		//DrawDebugLine( GetWorld() , StartPos , EndPos , FColor::Red , false , 1 , 0 , 1 );
+	}
 }
 
 void AMainPlayer::OnSpawnPointBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -407,24 +518,57 @@ void AMainPlayer::SpawnObject()
 		FVector ActorLocation = Spawnpoint->GetActorLocation() - FVector( 0.f , 0.f , 70.f );
 		FTransform SpawnTransform;
 		SpawnTransform.SetLocation( ActorLocation );
-		if (GameMode->Day_UI->ObjectType)
+		AActor* SpawnedActor = nullptr;
+
+		if (ObjectType)
 		{
-			GetWorld()->SpawnActor<ABarricade>( BarricadeFactory , SpawnTransform );
+			SpawnedActor = GetWorld()->SpawnActor<ABarricade>( BarricadeFactory , SpawnTransform );
+			USoundBase* SoundType = LoadObject<USoundBase>( nullptr , TEXT( "/Script/Engine.SoundWave'/Game/LJW/Sound/wood-smash-1-170410.wood-smash-1-170410'" ) );
+			ObjectSound = SoundType;
 		}
 		else
 		{
-			GetWorld()->SpawnActor<ADefenseTower>( AutoTurretFactory , SpawnTransform );
+			SpawnedActor = GetWorld()->SpawnActor<ADefenseTower>( AutoTurretFactory , SpawnTransform );
+			USoundBase* SoundType = LoadObject<USoundBase>( nullptr , TEXT( "/Script/Engine.SoundWave'/Game/LJW/Sound/falling-of-heavy-object-291096.falling-of-heavy-object-291096'" ) );
+			ObjectSound = SoundType;
 		}
+		
+
+
+
+		if (SpawnedActor)
+		{
+			ApplyBouncingEffect( SpawnedActor , ActorLocation , 400.0f , 0.3f );
+		}
+		UGameplayStatics::PlaySound2D( GetWorld() , ObjectSound );
+		FTransform EffectTrans;
+		EffectTrans.SetLocation( Spawnpoint->GetActorLocation() );
+		UGameplayStatics::SpawnEmitterAtLocation( GetWorld() , ObjectEffectFactory , EffectTrans );
 	}
 }
 
 void AMainPlayer::SetDamage( int32 damage )
 {
-	HP -= damage;
-	if (GameMode)
+	if (HP > 0)
 	{
-		GameMode->SetHP( HP , HPMax );
+		HP -= damage;
+		if (GameMode)
+		{
+			GameMode->SetHP( HP , HPMax );
+		}
 	}
+
+	else
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		auto anim = Cast<UPlayerAnimInstance> (AnimInstance);
+		if (AnimInstance)
+		{
+			anim->deadstate = true;
+		}
+	}
+	
+
 }
 
 void AMainPlayer::SetReload( )
@@ -438,7 +582,27 @@ void AMainPlayer::SetReload( )
 
 void AMainPlayer::DayState()
 {
+	GEngine->AddOnScreenDebugMessage( 0 , 5.f , FColor::Red , TEXT( "DayStateCall" ) );
 	CombatState = false;
+	CrosshairComp->SetVisibility( false );
+
+	UClass* WidgetClass = LoadObject<UClass>( nullptr , TEXT( "/Script/UMGEditor.WidgetBlueprint'/Game/LJW/UI/BP_Day_UI.BP_Day_UI_C'" ) );
+	if (WidgetClass)
+	{
+		WidgetComp->SetWidgetClass( WidgetClass );
+		WidgetComp->InitWidget();
+		DayUIInstance = Cast<UDay_UI>( WidgetComp->GetUserWidgetObject() );
+		if (DayUIInstance)
+		{
+			GameMode->PrintCash();
+			GameMode->PrintStore();
+			GameMode->PrintPrice();
+		}
+		WidgetComp->SetVisibility( true );
+		WidgetComp->SetDrawSize( FVector2D( 1280 , 720 ) );
+		WidgetComp->SetWorldRotation( WidgetComp->GetComponentRotation());
+		WidgetComp->SetRelativeLocation( VRCamera->GetForwardVector() * 1000 + FVector( 0.f , 0.f , 400.f ) );
+	}
 
 	TArray<AActor*> ActorsWithTag;
 	FName TagToSearch = TEXT( "Object" ); // 검색할 태그 이름
@@ -455,11 +619,13 @@ void AMainPlayer::DayState()
 			if (Object2)
 			{
 				Object2->meshcomp->SetCollisionEnabled( ECollisionEnabled::NoCollision );
+				Object2->meshcomp->SetSimulatePhysics( true );
 			}
 			auto Object1 = Cast<ABarricade>( Actor );
 			if (Object1)
 			{
 				Object1->meshcomp->SetCollisionEnabled( ECollisionEnabled::NoCollision );
+				Object1->meshcomp->SetSimulatePhysics( true );
 			}
 
 
@@ -484,19 +650,41 @@ void AMainPlayer::DayState()
 			}
 		}
 	}
-	
+	WoodenBarricade();
 }
 
 void AMainPlayer::NightState()
 {
 	CombatState = true;
+	CrosshairComp->SetVisibility( true );
+
+	UClass* WidgetClass = LoadObject<UClass>( nullptr , TEXT( "/Script/UMGEditor.WidgetBlueprint'/Game/LJW/UI/BP_Night_UI.BP_Night_UI_C'" ) );
+	if (WidgetClass)
+	{
+		WidgetComp->SetWidgetClass( WidgetClass );
+		WidgetComp->InitWidget();
+		NightUIInstance = Cast<UNight_UI>( WidgetComp->GetUserWidgetObject() );
+		if (NightUIInstance)
+		{
+			HP = HPMax;
+			Reload = ReloadMax;
+			GameMode->SetHP( HP, HPMax );
+			GameMode->SetReload( Reload, ReloadMax );
+			GameMode->PrintCash();
+			GameMode->PrintScore();
+		}
+		WidgetComp->SetVisibility( true );
+		WidgetComp->SetDrawSize( FVector2D( 1280 , 720 ) );
+		WidgetComp->SetWorldRotation( WidgetComp->GetComponentRotation());
+		WidgetComp->SetRelativeLocation( VRCamera->GetForwardVector() * 1000 + FVector( 0.f , 0.f , 400.f ) );
+	}
 
 	TArray<AActor*> ActorsWithTag;
 	FName TagToSearch = TEXT( "Object" );
 	GameMode->SetHP( HP , HPMax );
 	GameMode->SetReload( Reload , ReloadMax );
-	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , ActorsWithTag );
 
+	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , ActorsWithTag );
 	for (AActor* Actor : ActorsWithTag)
 	{
 		if (Actor)
@@ -505,11 +693,13 @@ void AMainPlayer::NightState()
 			if (Object2)
 			{
 				Object2->meshcomp->SetCollisionEnabled( ECollisionEnabled::QueryAndPhysics );
+				Object2->meshcomp->SetSimulatePhysics( false );
 			}
 			auto Object1 = Cast<ABarricade>( Actor );
 			if (Object1)
 			{
 				Object1->meshcomp->SetCollisionEnabled( ECollisionEnabled::QueryAndPhysics );
+				Object1->meshcomp->SetSimulatePhysics( false );
 			}
 
 
@@ -534,33 +724,252 @@ void AMainPlayer::NightState()
 	}
 }
 
-void AMainPlayer::RotateToMouseCursor()
+void AMainPlayer::Buy( const struct FInputActionValue& InputValue )
 {
-	APlayerController* PlayerController = Cast<APlayerController>( GetController() );
-	if (PlayerController)
+	if (!CombatState)
 	{
-		FHitResult HitResult;
-
-		// 마우스 포인터가 가리키는 위치를 가져오기
-		if (PlayerController->GetHitResultUnderCursor( ECC_Visibility , false , HitResult ))
+		if ((CashData - Price) >= 0)
 		{
-			FVector MouseLocation = HitResult.Location;  // 마우스가 가리키는 월드 좌표
-			FVector CharacterLocation = GetActorLocation();
+			if (ObjectType)
+			{
+				BarricadeStoreData += 1;
+				StoreData = BarricadeStoreData;
+			}
+			else
+			{
+				AutoTurretStoreData += 1;
+				StoreData = AutoTurretStoreData;
+			}
 
-			// 캐릭터와 마우스 위치 간의 방향 벡터 계산 (2D 평면에서만)
-			FVector LookAtDirection = (MouseLocation - CharacterLocation).GetSafeNormal2D();
+			CashData -= Price;
+			if (Spawnpoint)
+			{
+				OverlapEvent( Spawnpoint , this );
+			}
 
-			// LookAtDirection을 기반으로 Yaw 값 계산
-			float TargetYaw = FMath::Atan2( LookAtDirection.Y , LookAtDirection.X ) * 180.0f / PI;
-
-			// 현재 캐릭터 회전값 가져오기
-			FRotator CurrentRotation = GetActorRotation();
-
-			// Z축(Yaw)만 변경하고 X(Pitch)와 Y(Roll)는 유지
-			CurrentRotation.Yaw = TargetYaw;
-
-			// 캐릭터 회전 적용
-			SetActorRotation( CurrentRotation );
+			if (GameMode)
+			{
+				GameMode->PrintPlace();
+				GameMode->PrintStore();
+				GameMode->PrintCash();
+			}
 		}
 	}
+}
+
+void AMainPlayer::NextLevel( const struct FInputActionValue& InputValue )
+{
+	if (!CombatState)
+	{
+		auto GameState = GetWorld()->GetGameState();
+		if (GameState)
+		{
+			auto MainGameState = Cast<AMainGameStateBase>( GameState );
+			if (MainGameState)
+			{
+				MainGameState->SetDayNightState( EDayNightState::Night );
+			}
+		}
+	}
+	
+}
+
+void AMainPlayer::Place( const struct FInputActionValue& InputValue )
+{
+	if (!CombatState)
+	{
+		if (Spawnpoint && !Spawnpoint->spawnstate)
+		{
+			SpawnObject();
+			if (ObjectType && BarricadeStoreData > 0)
+			{
+				BarricadeStoreData -= 1;
+				StoreData = BarricadeStoreData;
+			}
+			else if (!ObjectType && AutoTurretStoreData > 0)
+			{
+				AutoTurretStoreData -= 1;
+				StoreData = AutoTurretStoreData;
+			}
+			GameMode->PrintStore();
+			Spawnpoint->meshcomp->SetVisibility( false );
+		}
+		else if (Spawnpoint && Spawnpoint->spawnstate)
+		{
+			if (OverlapActor)
+			{
+				if (OverlapActor->ActorHasTag( TEXT( "Object" ) ))
+				{
+					OverlapActor->Destroy();
+					if (ObjectType)
+					{
+						BarricadeStoreData += 1;
+						StoreData = BarricadeStoreData;
+					}
+					else
+					{
+						AutoTurretStoreData += 1;
+						StoreData = AutoTurretStoreData;
+					}
+
+					GameMode->PrintStore();
+					GameMode->PrintPlace();
+					Spawnpoint->spawnstate = false;
+					Spawnpoint->meshcomp->SetVisibility( true );
+				}
+			}
+		}
+	}
+}
+
+void AMainPlayer::Remove( const struct FInputActionValue& InputValue )
+{
+	if (!CombatState)
+	{
+		GEngine->AddOnScreenDebugMessage( -1 , 5.f , FColor::Green , TEXT( "Remove" ) );
+	}
+}
+
+void AMainPlayer::WoodenBarricade()
+{
+	ObjectType = true;
+	UStaticMesh* MeshType = LoadObject<UStaticMesh>( nullptr , TEXT( "/Script/Engine.StaticMesh'/Game/LJW/Asset/Barricade/source/SM_Barricade.SM_Barricade'" ) );
+	StoreData = BarricadeStoreData;
+	Price = BarricadePrice;
+	GameMode->PrintStore();
+	GameMode->PrintPrice();
+
+	TArray<AActor*> FoundActors;
+	FName TagToSearch = TEXT( "SpawnPoint" ); // 검색할 태그 이름
+
+	// 액터 검색
+	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , FoundActors );
+	for (AActor* Actors : FoundActors)
+	{
+		auto barricade = Cast<ASpawnPoint>( Actors );
+		if (barricade)
+		{
+			barricade->meshcomp->SetStaticMesh( MeshType );
+
+			SpawnLocation = FVector( 0.f , 0.f , 70.f );
+			SpawnRotation = FRotator( 0.f , 90.f , 0.f );
+			SpawnScale = FVector( 0.5 , 0.3 , 0.5 );
+
+			if (Spawnpoint)
+			{
+				Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - SpawnLocation );
+				Spawnpoint->meshcomp->SetWorldRotation( SpawnRotation );
+				Spawnpoint->meshcomp->SetRelativeScale3D( SpawnScale );
+			}
+		}
+	}
+}
+
+void AMainPlayer::AutoTurret()
+{
+	ObjectType = false;
+	GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "AutoTurret" ) );
+	UStaticMesh* MeshType = LoadObject<UStaticMesh>( nullptr , TEXT( "/Script/Engine.StaticMesh'/Game/LJW/Asset/defence-tower/source/StaticMesh.StaticMesh'" ) );
+
+	StoreData = AutoTurretStoreData;
+	Price = AutoTurretPrice;
+	GameMode->PrintStore();
+	GameMode->PrintPrice();
+
+	TArray<AActor*> FoundActors;
+	FName TagToSearch = TEXT( "SpawnPoint" ); // 검색할 태그 이름
+
+	// 액터 검색
+	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , FoundActors );
+	for (AActor* Actors : FoundActors)
+	{
+		auto defensetower = Cast<ASpawnPoint>( Actors );
+		if (defensetower)
+		{
+			defensetower->meshcomp->SetStaticMesh( MeshType );
+
+			SpawnLocation = FVector( 0.f , 0.f , 30.f );
+			SpawnRotation = FRotator( 0.f , 90.f , 0.f );
+			SpawnScale = FVector( 0.3 , 0.2 , 0.3 );
+
+			if (Spawnpoint)
+			{
+				Spawnpoint->meshcomp->SetWorldLocation( Spawnpoint->GetActorLocation() - SpawnLocation );
+				Spawnpoint->meshcomp->SetWorldRotation( SpawnRotation );
+				Spawnpoint->meshcomp->SetRelativeScale3D( SpawnScale );
+			}
+		}
+	}
+}
+
+void AMainPlayer::Object( const struct FInputActionValue& InputValue )
+{
+	if (!CombatState)
+	{
+		if (ObjectType)
+		{
+			AutoTurret();
+		}
+
+		else if(!ObjectType)
+		{
+			WoodenBarricade();
+		}
+	}
+}
+
+float AMainPlayer::EaseOutBounce( float x )
+{
+	const float n1 = 7.5625f;
+	const float d1 = 2.75f;
+
+	if (x < 1 / d1)
+	{
+		return n1 * x * x;
+	}
+	else if (x < 2 / d1)
+	{
+		x -= 1.5f / d1;
+		return n1 * x * x + 0.98f;
+	}
+	else if (x < 2.5f / d1)
+	{
+		x -= 2.25f / d1;
+		return n1 * x * x + 0.9875f;
+	}
+	else
+	{
+		x -= 2.625f / d1;
+		return n1 * x * x + 0.984375f;
+	}
+}
+
+float AMainPlayer::FlippedEaseOutBounce( float x )
+{
+	return 1.0f - EaseOutBounce( x );
+}
+
+void AMainPlayer::ApplyBouncingEffect( AActor* TargetActor , FVector Location , float BounceHeight , float Duration )
+{
+	if (!TargetActor) return;
+
+	float StartTime = GetWorld()->GetTimeSeconds();
+
+	GetWorld()->GetTimerManager().SetTimer( TimerHandle , [this , TargetActor , StartTime , Duration , Location , BounceHeight]()
+	{
+		float Elapsed = GetWorld()->GetTimeSeconds() - StartTime;
+		float t = Elapsed / Duration; 
+
+		if (t > 1.0f)
+		{
+			GetWorld()->GetTimerManager().ClearTimer( TimerHandle );
+			return;
+		}
+
+		float BounceOffset = FlippedEaseOutBounce( t ) * BounceHeight;
+
+		FVector NewLocation = Location + FVector( 0 , 0 , BounceOffset );
+		TargetActor->SetActorLocation( NewLocation );
+
+	} , 0.016f , true );
 }

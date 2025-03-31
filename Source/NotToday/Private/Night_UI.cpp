@@ -15,13 +15,12 @@ void UNight_UI::NativeConstruct()
 
 void UNight_UI::SetHP( float Cur , float Max )
 {
-	if (!HPBar) return;
-	HPBar->SetPercent( Cur / Max );
+	player->NightUIInstance->HPBar->SetPercent( Cur / Max );
 }
 
 void UNight_UI::SetReload( float Cur , float Max )
 {
-	if (!ReloadBar) return;
-	ReloadBar->SetPercent( Cur / Max );
+	
+	player->NightUIInstance->ReloadBar->SetPercent( Cur / Max );
 }
 

@@ -12,6 +12,7 @@
 #include "Barricade.h"
 #include "SpawnPoint.h"
 #include "Components/BoxComponent.h"
+#include "Components/WidgetComponent.h"
 
 void AMainGameModeBase::BeginPlay()
 {
@@ -22,154 +23,96 @@ void AMainGameModeBase::BeginPlay()
 	{
 		return;
 	}
-	gs->OnDayStarted.AddDynamic( this , &AMainGameModeBase::ChangeNtoD );
-	gs->OnNightStarted.AddDynamic( this , &AMainGameModeBase::ChangeDtoN );
 	gs->OnGameClear.AddDynamic( this , &AMainGameModeBase::EndGame );
 	player = Cast<AMainPlayer>( GetWorld()->GetFirstPlayerController()->GetPawn() );
-	//ChangeDtoN();
-	Day_UI = CreateWidget<UDay_UI>( GetWorld() , DayWidget );
-	Night_UI = CreateWidget<UNight_UI>( GetWorld() , NightWidget );
-	player->HP = player->HPMax;
-	player->Reload = player->ReloadMax;
-	SetHP( player->HP , player->HPMax );
-	SetReload( player->Reload , player->ReloadMax );
-	PrintCash();
-	Night_UI->AddToViewport();
 }
 
 void AMainGameModeBase::PrintStore()
 {
-	if (Day_UI && Day_UI->IsValidLowLevel())
+	if (player)
 	{
-		if (player)
+		DayUIInstance = Cast<UDay_UI>( player->WidgetComp->GetUserWidgetObject() );
+		if (DayUIInstance)
 		{
-			Day_UI->StoreDataText->SetText( FText::AsNumber( player->StoreData ) );
+			DayUIInstance->StoreDataText->SetText( FText::AsNumber( player->StoreData ) );
 		}
 	}
 }
 
 void AMainGameModeBase::PrintCash()
 {
-	if (Day_UI && Day_UI->IsValidLowLevel())
+	
+	if (player && !player->CombatState)
 	{
-		if (player)
+		if (player->DayUIInstance)
 		{
-			if (player->CashData == 0) Day_UI->CashDataText->SetText( FText::FromString( TEXT( "0" ) ) );
-
-			else Day_UI->CashDataText->SetText( FText::AsNumber( player->CashData ) );
+			player->DayUIInstance->CashDataText->SetText( FText::AsNumber( player->CashData ) );
 		}
 	}
 
-	if (Night_UI && Night_UI->IsValidLowLevel())
+	
+	if (player && player->CombatState)
 	{
-		if (player)
+		if (player->NightUIInstance)
 		{
-			if (player->CashData == 0) Night_UI->CashDataText->SetText( FText::FromString( TEXT( "0") ) );
-
-			else Night_UI->CashDataText->SetText( FText::AsNumber( player->CashData ) );
+			player->NightUIInstance->CashDataText->SetText( FText::AsNumber( player->CashData ) );
 		}
 	}
 }
 
 void AMainGameModeBase::PrintScore()
 {
-	if (Night_UI && Night_UI->IsValidLowLevel())
+	if (player)
 	{
-		if (player)
+		if (player->NightUIInstance)
 		{
-			Night_UI->ScoreDataText->SetText( FText::AsNumber( player->ScoreData ) );
-		}
+			player->NightUIInstance->ScoreDataText->SetText( FText::AsNumber( player->ScoreData ) );
+		}	
 	}
 }
 
 void AMainGameModeBase::PrintPrice()
 {
-	if (Day_UI)
+	if (player)
 	{
-		if (player)
+		if (player->DayUIInstance)
 		{
-			Day_UI->PriceDataText->SetText( FText::AsNumber( player->Price ) );
+			player->DayUIInstance->PriceDataText->SetText( FText::AsNumber( player->Price ) );
 		}
 	}
 }
 
 void AMainGameModeBase::PrintPlace()
 {
-	if (Day_UI && Day_UI->IsValidLowLevel())
+	/*if (player)
 	{
-		Day_UI->PlaceText->SetText( FText::FromString( TEXT( "PLACE" ) ) );
-	}
+		if (player->DayUIInstance)
+		{
+			player->DayUIInstance->PlaceText->SetText( FText::FromString( TEXT( "PLACE" ) ) );
+		}
+	}*/
 }
 
 void AMainGameModeBase::PrintRemove()
 {
-	if (Day_UI && Day_UI->IsValidLowLevel())
+	/*if (player)
 	{
-		if (player->CombatState) return;
-		Day_UI->PlaceText->SetText( FText::FromString( TEXT( "REMOVE" ) ) );
-	}
+		if (player->DayUIInstance)
+		{
+			player->DayUIInstance->PlaceText->SetText( FText::FromString( TEXT( "REMOVE" ) ) );
+		}
+	}*/
 }
 
 void AMainGameModeBase::PrintElse()
 {
-	if (Day_UI && Day_UI->IsValidLowLevel())
+	/*if (player)
 	{
-		Day_UI->PlaceText->SetText( FText::FromString( TEXT( "" ) ) );
-	}
-}
-
-void AMainGameModeBase::ChangeDtoN()
-{
-	if (NightWidget)
-	{	
-		GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "DtoN" ) );
-		
-		if (Day_UI)
+		if (player->DayUIInstance)
 		{
-			Day_UI->RemoveFromParent();
+			player->DayUIInstance->PlaceText->SetText( FText::FromString( TEXT( "" ) ) );
 		}
-		Night_UI = CreateWidget<UNight_UI>( GetWorld() , NightWidget );
-		if (Night_UI)
-		{
-			Night_UI->AddToViewport();
-		}
-
-		player->HP = player->HPMax;
-		player->Reload = player->ReloadMax;
-		SetHP( player->HP , player->HPMax );
-		SetReload( player->Reload , player->ReloadMax );
-		PrintCash();
-		PrintScore();
-	}
-}
-
-void AMainGameModeBase::ChangeNtoD()
-{
-	if (DayWidget)
-	{
-		GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "NtoD" ) );
-		if (Night_UI)
-		{
-			Night_UI->RemoveFromParent();
-		}
-		Day_UI = CreateWidget<UDay_UI>( GetWorld() , DayWidget );
-		if (Day_UI)
-		{
-			Day_UI->AddToViewport();
-		}
-		//player->Price = player->BarricadePrice;
-		//player->StoreData = player->BarricadeStoreData;
-		PrintPrice();
-		PrintStore();
-		PrintCash();
-
-		auto* pc = GetWorld()->GetFirstPlayerController();
-		if (pc)
-		{
-			pc->SetShowMouseCursor( true );
-			pc->SetInputMode( FInputModeGameAndUI() );
-		}
-	}
+	}*/
 }
 
 void AMainGameModeBase::EndGame()
@@ -179,12 +122,16 @@ void AMainGameModeBase::EndGame()
 
 void AMainGameModeBase::SetHP( float Cur , float Max )
 {
-	if (!Night_UI) return;
-	Night_UI->SetHP( Cur , Max );
+	if (player->NightUIInstance)
+	{
+		player->NightUIInstance->SetHP( Cur , Max );
+	}
 }
 
 void AMainGameModeBase::SetReload( float Cur , float Max )
 {
-	if (!Night_UI) return;
-	Night_UI->SetReload( Cur , Max );
+	if (player->NightUIInstance)
+	{
+		player->NightUIInstance->SetReload(Cur , Max);
+	}
 }
