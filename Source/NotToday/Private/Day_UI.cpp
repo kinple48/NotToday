@@ -36,7 +36,7 @@ void UDay_UI::Place()
 				player->BarricadeStoreData -= 1;
 				player->StoreData = player->BarricadeStoreData;
 			}
-			else if(!ObjectType && player->BarricadeStoreData > 0)
+			else if(!ObjectType && player->AutoTurretStoreData > 0)
 			{
 				player->AutoTurretStoreData -= 1;
 				player->StoreData = player->AutoTurretStoreData;
@@ -78,13 +78,11 @@ void UDay_UI::Buy()
 	{
 		if (ObjectType)
 		{
-			GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "b buy" ) );
 			player->BarricadeStoreData += 1;
 			player->StoreData = player->BarricadeStoreData;
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "t buy" ) );
 			player->AutoTurretStoreData += 1;
 			player->StoreData = player->AutoTurretStoreData;
 		}
@@ -120,72 +118,72 @@ void UDay_UI::NextLevel()
 
 void UDay_UI::WoodenBarricade()
 {
-	ObjectType = true;
-	UStaticMesh* Mesh = LoadObject<UStaticMesh>( nullptr , TEXT( "/Script/Engine.StaticMesh'/Game/LJW/Asset/Barricade/source/SM_Barricade.SM_Barricade'" ) );
-	player->StoreData = player->BarricadeStoreData;
-	player->Price = player->BarricadePrice;
-	GameMode->PrintStore();
-	GameMode->PrintPrice();
+	//ObjectType = true;
+	//UStaticMesh* Mesh = LoadObject<UStaticMesh>( nullptr , TEXT( "/Script/Engine.StaticMesh'/Game/LJW/Asset/Barricade/source/SM_Barricade.SM_Barricade'" ) );
+	//player->StoreData = player->BarricadeStoreData;
+	//player->Price = player->BarricadePrice;
+	//GameMode->PrintStore();
+	//GameMode->PrintPrice();
 
-	TArray<AActor*> FoundActors;
-	FName TagToSearch = TEXT( "SpawnPoint" ); // 검색할 태그 이름
+	//TArray<AActor*> FoundActors;
+	//FName TagToSearch = TEXT( "SpawnPoint" ); // 검색할 태그 이름
 
-	// 액터 검색
-	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , FoundActors );
-	for (AActor* Actors : FoundActors)
-	{
-		auto barricade = Cast<ASpawnPoint>( Actors );
-		if (barricade)
-		{
-			barricade->meshcomp->SetStaticMesh( Mesh );
+	//// 액터 검색
+	//UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , FoundActors );
+	//for (AActor* Actors : FoundActors)
+	//{
+	//	auto barricade = Cast<ASpawnPoint>( Actors );
+	//	if (barricade)
+	//	{
+	//		barricade->meshcomp->SetStaticMesh( Mesh );
 
-			player->SpawnLocation = FVector( 0.f , 0.f , 70.f );
-			player->SpawnRotation = FRotator( 0.f , 90.f , 0.f );
-			player->SpawnScale = FVector( 0.5 , 0.3 , 0.5 );
+	//		player->SpawnLocation = FVector( 0.f , 0.f , 70.f );
+	//		player->SpawnRotation = FRotator( 0.f , 90.f , 0.f );
+	//		player->SpawnScale = FVector( 0.5 , 0.3 , 0.5 );
 
-			if (player->Spawnpoint)
-			{
-				player->Spawnpoint->meshcomp->SetWorldLocation( player->Spawnpoint->GetActorLocation() - player->SpawnLocation );
-				player->Spawnpoint->meshcomp->SetWorldRotation( player->SpawnRotation );
-				player->Spawnpoint->meshcomp->SetRelativeScale3D( player->SpawnScale );
-			}
-		}
-	}
+	//		if (player->Spawnpoint)
+	//		{
+	//			player->Spawnpoint->meshcomp->SetWorldLocation( player->Spawnpoint->GetActorLocation() - player->SpawnLocation );
+	//			player->Spawnpoint->meshcomp->SetWorldRotation( player->SpawnRotation );
+	//			player->Spawnpoint->meshcomp->SetRelativeScale3D( player->SpawnScale );
+	//		}
+	//	}
+	//}
 }
 
 void UDay_UI::AutoTurret()
 {
-	ObjectType = false;
-	GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "AutoTurret" ) );
-	UStaticMesh* Mesh = LoadObject<UStaticMesh>( nullptr , TEXT( "/Script/Engine.StaticMesh'/Game/LJW/Asset/defence-tower/source/StaticMesh.StaticMesh'" ) );
-	
-	player->StoreData = player->AutoTurretStoreData;
-	player->Price = player->AutoTurretPrice;
-	GameMode->PrintStore();
-	GameMode->PrintPrice();
+	//ObjectType = false;
+	//GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "AutoTurret" ) );
+	//UStaticMesh* Mesh = LoadObject<UStaticMesh>( nullptr , TEXT( "/Script/Engine.StaticMesh'/Game/LJW/Asset/defence-tower/source/StaticMesh.StaticMesh'" ) );
+	//
+	//player->StoreData = player->AutoTurretStoreData;
+	//player->Price = player->AutoTurretPrice;
+	//GameMode->PrintStore();
+	//GameMode->PrintPrice();
 
-	TArray<AActor*> FoundActors;
-	FName TagToSearch = TEXT( "SpawnPoint" ); // 검색할 태그 이름
+	//TArray<AActor*> FoundActors;
+	//FName TagToSearch = TEXT( "SpawnPoint" ); // 검색할 태그 이름
 
-	// 액터 검색
-	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , FoundActors );
-	for (AActor* Actors : FoundActors)
-	{
-		auto defensetower = Cast<ASpawnPoint>( Actors );
-		if (defensetower)
-		{
-			defensetower->meshcomp->SetStaticMesh( Mesh );
+	//// 액터 검색
+	//UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , FoundActors );
+	//for (AActor* Actors : FoundActors)
+	//{
+	//	auto defensetower = Cast<ASpawnPoint>( Actors );
+	//	if (defensetower)
+	//	{
+	//		defensetower->meshcomp->SetStaticMesh( Mesh );
 
-			player->SpawnLocation = FVector( 0.f , 0.f , 30.f );
-			player->SpawnRotation = FRotator( 0.f , 90.f , 0.f );
-			player->SpawnScale = FVector( 0.3 , 0.2 , 0.3 );
+	//		player->SpawnLocation = FVector( 0.f , 0.f , 30.f );
+	//		player->SpawnRotation = FRotator( 0.f , 90.f , 0.f );
+	//		player->SpawnScale = FVector( 0.3 , 0.2 , 0.3 );
 
-			if (player->Spawnpoint)
-			{
-				player->Spawnpoint->meshcomp->SetWorldLocation( player->Spawnpoint->GetActorLocation() - player->SpawnLocation );
-				player->Spawnpoint->meshcomp->SetWorldRotation( player->SpawnRotation );
-				player->Spawnpoint->meshcomp->SetRelativeScale3D( player->SpawnScale );
-			}
-		}
-	}
+	//		if (player->Spawnpoint)
+	//		{
+	//			player->Spawnpoint->meshcomp->SetWorldLocation( player->Spawnpoint->GetActorLocation() - player->SpawnLocation );
+	//			player->Spawnpoint->meshcomp->SetWorldRotation( player->SpawnRotation );
+	//			player->Spawnpoint->meshcomp->SetRelativeScale3D( player->SpawnScale );
+	//		}
+	//	}
+	//}
 }
