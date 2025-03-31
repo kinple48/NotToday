@@ -45,6 +45,8 @@ public:
 	void ZombieKilled(AZombieBase* Zombie);
 
 protected:
+
+	
 	virtual void BeginPlay() override;
 	
 private:
@@ -54,6 +56,7 @@ private:
 	void StartCheckAllKillLoop(float Rate);
 	
 	FTimerHandle CheckAllKillTimerHandle; // 좀비가 모두 죽을 때까지 계속해서 확인한다.
+	
 	UFUNCTION()
 	void DecreaseAndCheckLeftToKill(AZombieBase* Zombie);
 	void CheckLeftZombieCount();
@@ -62,14 +65,20 @@ public:
 	UFUNCTION()
 	void LoadNextWaveData();
 
+	UFUNCTION()
+	void PlayWaveStartSound();
+	
 private:
+	// 웨이브 데이터
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UDataTable> WaveDataTable {nullptr};
+	
 	UPROPERTY(VisibleAnywhere)
 	int32 NextWaveID {0};
-	//FString Zombies;
+	
 	UPROPERTY(VisibleAnywhere)
 	int32 Money;
+	
 	UPROPERTY(VisibleAnywhere)
 	int32 LeftToKill {0};
 
@@ -81,4 +90,14 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	class APlayerController* pc;
+
+	// 아이템 자석 흡수
+	void ItemMagnet();
+	
+	FTimerHandle ItemMagnetTimerHandle;
+	
+	float ItemElapsedTime {0.f};
+	
+	UPROPERTY(EditAnywhere)
+	float ItemMagnetDuration { 1.5f };
 };

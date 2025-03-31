@@ -7,6 +7,7 @@
 #include "AITypes.h"
 #include "Barricade.h"
 #include "DefenseTower.h"
+#include "MainGameModeBase.h"
 #include "MainGameStateBase.h"
 #include "MainPlayer.h"
 #include "NavigationSystem.h"
@@ -276,6 +277,16 @@ void UZombieFSMComponent::OnDamage(int32 damage)
 		AIController->StopMovement();
 
 		Me->ItemDrop->DropItem();
+
+		// 돈 획득
+		Player->CashData += 100.f;
+		if (auto GameMode = GetWorld()->GetAuthGameMode())
+		{
+			if (auto MainGameMode = Cast<AMainGameModeBase>(GameMode))
+			{
+				MainGameMode->PrintCash();
+			}
+		}
 	}
 }
 

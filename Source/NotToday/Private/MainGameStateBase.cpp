@@ -8,6 +8,9 @@
 #include "CSW/ZombieSpawner.h"
 #include "NotToday/NotToday.h"
 #include "MainPlayer.h"
+#include "CSW/Item/DropItem.h"
+#include "CSW/Subsystem/SoundManagerSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 
 void AMainGameStateBase::BeginPlay()
 {
@@ -34,6 +37,8 @@ void AMainGameStateBase::BeginPlay()
 	// 델리게이트 바인딩
 	OnDayStarted.AddDynamic(this, &AMainGameStateBase::LoadNextWaveData); // LoadNextWaveData
 	
+	OnNightStarted.AddDynamic(this, &AMainGameStateBase::PlayWaveStartSound);
+
 	OnZombieKilled.AddDynamic(this, &AMainGameStateBase::DecreaseAndCheckLeftToKill); // DecreaseAndCheckLeftToKill
 	
 	LoadNextWaveData();
@@ -43,28 +48,17 @@ void AMainGameStateBase::BeginPlay()
 void AMainGameStateBase::SetDayNightState(EDayNightState NewState)
 {
 	State = NewState;
-
-	// GameState클래스가 아닌 부분에서는
-	// OnDayNightChanged.AddDynamic을 한다!!
-	//OnDayNightChanged.Broadcast(State);
-
-	// GameState 클래스 내부 처리
+	
 	if (State == EDayNightState::Day)
 	{
 		PRINT_LOG(CSW, TEXT("SetDayNightState --> Day"));
-		// 낮
 		OnDayStarted.Broadcast();
-		// 다음 웨이브 데이터를 가져온다.
-		//LoadNextWaveData();
 	}
 	else
 	{
 		PRINT_LOG(CSW, TEXT("SetDayNightState --> Night"));
-		// 밤 ( 웨이브 시작 )
-		OnNightStarted.Broadcast();
 		
-		//ZombieSpawner->SpawnZombie();
-		//StartCheckAllKillLoop(1.f); // 좀비 수 확인 루프 시작
+		OnNightStarted.Broadcast();
 	}
 }
 
@@ -105,13 +99,32 @@ void AMainGameStateBase::LoadNextWaveData()
 	ZombieSpawner->ParseZombiesStringAndCount(WaveData->Zombies, LeftToKill);
 }
 
-// LeftZombieNum이 0이 될 때까지 CheckLeft 루프를 돈다.
-void AMainGameStateBase::StartCheckAllKillLoop(float Rate)
+void AMainGameStateBase::PlayWaveStartSound()
 {
-	// GetWorld()->GetTimerManager().SetTimer(CheckAllKillTimerHandle,
-	// 	this, &AMainGameStateBase::CheckLeftZombieCount,
-	// 	Rate, true, Rate
-	// );
+	USoundManagerSubsystem* SoundManager = GetGameInstance()->GetSubsystem<USoundManagerSubsystem>();
+	if (SoundManager)
+	{
+		SoundManager->PlaySound2D(ESoundType::NightStart);
+	}
+}
+
+void AMainGameStateBase::ItemMagnet()
+{
+	ItemElapsedTime += 0.03f;
+    float Alpha = FMath::Clamp(ItemElapsedTime / ItemMagnetDuration, 0.0f, 1.0f);
+	bool bItemExist = false;
+	// 모든 아이템들이 플레이어를 향해 날아오도록 한다.
+	for (TActorIterator<ADropItem> It(GetWorld()); It; ++It)
+	{
+		FVector NextLocation = FMath::Lerp(It->GetActorLocation(), player->GetActorLocation(), Alpha);
+		It->SetActorLocation(NextLocation);
+		bItemExist = true;
+	}
+
+	if (!bItemExist)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(ItemMagnetTimerHandle);
+	}
 }
 
 void AMainGameStateBase::DecreaseAndCheckLeftToKill(AZombieBase* Zombie)
@@ -126,10 +139,15 @@ void AMainGameStateBase::CheckLeftZombieCount()
 	// 0 이하면
 	if (LeftToKill == 0)
 	{
-		//GetWorld()->GetTimerManager().ClearTimer(CheckAllKillTimerHandle);
+		ItemElapsedTime = 0.f;
+		
+		// 모든 아이템을 플레이어가 먹도록 유도하기
+		GetWorld()->GetTimerManager().SetTimer(ItemMagnetTimerHandle, this, &AMainGameStateBase::ItemMagnet,
+			0.03f, true);
 
 		// 낮으로 전환시키기!
 		SetDayNightState(EDayNightState::Day);
 	}
 }
+
 
