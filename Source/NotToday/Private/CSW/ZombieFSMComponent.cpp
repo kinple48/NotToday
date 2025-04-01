@@ -90,6 +90,12 @@ void UZombieFSMComponent::SetState(EZombieState InState)
 
 void UZombieFSMComponent::MoveTick()
 {
+	if (Player->HP <= 0)
+	{
+		// 플레이어가 죽은 상태면 랜덤 이동
+		
+		return;
+	}
 	if (!NS)
 	{
 		NS = UNavigationSystemV1::GetNavigationSystem(GetWorld());
@@ -187,7 +193,7 @@ void UZombieFSMComponent::MoveTick()
 	FVector Start = Me->GetActorLocation() + Me->GetActorUpVector();
 	FVector End = Start + (Target->GetActorLocation() - Me->GetActorLocation()).GetSafeNormal() * AttackRange;
 	
-	DrawDebugLine(GetWorld(), Start, End, FColor::Magenta);
+	//DrawDebugLine(GetWorld(), Start, End, FColor::Magenta);
 	
 	bool bHit = GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_ZombieTarget, FCollisionShape::MakeBox(FVector(0.5f))); 
 	if (bHit && !bAttackPlaying)

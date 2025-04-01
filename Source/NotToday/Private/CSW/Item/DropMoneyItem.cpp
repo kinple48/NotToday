@@ -5,6 +5,9 @@
 
 #include "MainGameModeBase.h"
 #include "MainPlayer.h"
+#include "CSW/Subsystem/SoundManagerSubsystem.h"
+
+class USoundManagerSubsystem;
 
 ADropMoneyItem::ADropMoneyItem() 
 {
@@ -28,6 +31,13 @@ void ADropMoneyItem::Apply(AMainPlayer* Player)
         {
             MainGameMode->PrintCash();
         }
+    }
+    //SFX
+    // SFX
+    auto SM = GetGameInstance()->GetSubsystem<USoundManagerSubsystem>();
+    if (SM)
+    {
+        SM->PlaySoundAtLocation(ESoundType::MoneyPickUp, GetActorLocation());
     }
     Destroy();
 }

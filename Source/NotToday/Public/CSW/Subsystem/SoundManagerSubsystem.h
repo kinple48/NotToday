@@ -10,6 +10,7 @@ UENUM(BlueprintType)
 enum class ESoundType : uint8
 {
 	AmmoBoxPickUp,
+	HealthPickUp,
 	MoneyPickUp,
 	NightStart,
 	Reload,

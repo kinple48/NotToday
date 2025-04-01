@@ -6,6 +6,8 @@
 #include "MainGameModeBase.h"
 #include "MainPlayer.h"
 #include "Night_UI.h"
+#include "CSW/Subsystem/SoundManagerSubsystem.h"
+#include "NotToday/NotToday.h"
 
 ADropHPItem::ADropHPItem()
 {
@@ -30,5 +32,13 @@ void ADropHPItem::Apply(AMainPlayer* Player)
             Player->NightUIInstance->SetHP( Player->HP , Player->HPMax );
         }
     }
+    // SFX
+    auto SM = GetGameInstance()->GetSubsystem<USoundManagerSubsystem>();
+    if (SM)
+    {
+        SM->PlaySoundAtLocation(ESoundType::HealthPickUp, GetActorLocation());
+    }
+
+    
     Super::Apply(Player);
 }

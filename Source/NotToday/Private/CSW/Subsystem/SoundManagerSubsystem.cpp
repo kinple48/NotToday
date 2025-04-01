@@ -4,16 +4,18 @@
 #include "CSW/Subsystem/SoundManagerSubsystem.h"
 
 #include "Kismet/GameplayStatics.h"
+#include "NotToday/NotToday.h"
 #include "Sound/SoundCue.h"
 
 TMap<ESoundType, FString> USoundManagerSubsystem::SoundMap = {
-	{ESoundType::AmmoBoxPickUp, "/Script/Engine.SoundWave'/Game/SFX/AmmoBoxPickUp.AmmoBoxPickUp'"},
-	{ESoundType::MoneyPickUp, "/Script/Engine.SoundWave'/Game/SFX/MoneyPickUp.MoneyPickUp'"},
-	{ESoundType::NightStart, "/Script/Engine.SoundWave'/Game/SFX/NightStart.NightStart'"},
-	{ESoundType::Reload, "/Script/Engine.SoundWave'/Game/SFX/Reload.Reload'"},
-	{ESoundType::ZombieAttack, "/Script/Engine.SoundWave'/Game/SFX/ZombieAttack.ZombieAttack'"},
-	{ESoundType::ZombieDie, "/Script/Engine.SoundWave'/Game/SFX/ZombieDie.ZombieDie'"},
-	{ESoundType::ZombieHit, "/Script/Engine.SoundWave'/Game/SFX/ZombieHit.ZombieHit'"}
+	{ESoundType::AmmoBoxPickUp, "/Script/Engine.SoundWave'/Game/SFX/AmmoBoxPickUp_Cue.AmmoBoxPickUp_Cue'"},
+	{ESoundType::HealthPickUp, "/Script/Engine.SoundWave'/Game/SFX/HealthPickUp_Cue.HealthPickUp_Cue'"},
+	{ESoundType::MoneyPickUp, "/Script/Engine.SoundWave'/Game/SFX/MoneyPickUp_Cue.MoneyPickUp_Cue'"},
+	{ESoundType::NightStart, "/Script/Engine.SoundWave'/Game/SFX/NightStart_Cue.NightStart_Cue'"},
+	{ESoundType::Reload, "/Script/Engine.SoundWave'/Game/SFX/Reload_Cue.Reload_Cue'"},
+	{ESoundType::ZombieAttack, "/Script/Engine.SoundWave'/Game/SFX/ZombieAttack_Cue.ZombieAttack_Cue'"},
+	{ESoundType::ZombieDie, "/Script/Engine.SoundWave'/Game/SFX/ZombieDie_Cue.ZombieDie_Cue'"},
+	{ESoundType::ZombieHit, "/Script/Engine.SoundCue'/Game/SFX/ZombieHit_Cue.ZombieHit_Cue'"}
 };
 
 void USoundManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -53,7 +55,15 @@ void USoundManagerSubsystem::PlaySound2D(USoundCue* Cue)
 
 void USoundManagerSubsystem::PlaySound2D(ESoundType SoundType)
 {
-	UGameplayStatics::PlaySound2D(GetWorld(), FindSoundCue(SoundType));
+	auto cue = FindSoundCue(SoundType);
+	if (cue)
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), FindSoundCue(SoundType));
+	}
+	else
+	{
+		PRINT_LOG(CSW, TEXT("FindSoundCue(SoundType) == nullptr..."));
+	}
 }
 
 void USoundManagerSubsystem::PlaySoundAtLocation(USoundCue* Cue, FVector Location)
@@ -63,5 +73,13 @@ void USoundManagerSubsystem::PlaySoundAtLocation(USoundCue* Cue, FVector Locatio
 
 void USoundManagerSubsystem::PlaySoundAtLocation(ESoundType SoundType, FVector Location)
 {
-	UGameplayStatics::PlaySoundAtLocation(GetWorld(), FindSoundCue(SoundType), Location);
+	auto cue = FindSoundCue(SoundType);
+	if (cue)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), FindSoundCue(SoundType), Location);
+	}
+	else
+	{
+		PRINT_LOG(CSW, TEXT("FindSoundCue(SoundType) == nullptr..."));
+	}
 }

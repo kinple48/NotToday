@@ -32,6 +32,9 @@
 #include "Night_UI.h"
 #include "UObject/UObjectGlobals.h"
 #include "PlayerAnimInstance.h"
+#include "CSW/Subsystem/SoundManagerSubsystem.h"
+
+class USoundManagerSubsystem;
 
 AMainPlayer::AMainPlayer()
 {
@@ -213,6 +216,13 @@ void AMainPlayer::Tick(float DeltaTime)
 			Reload = ReloadMax;
 			GameMode->SetReload( Reload , ReloadMax );
 			CurrentTime = 0.f;
+
+			// Reload SFX
+			auto SM = GetGameInstance()->GetSubsystem<USoundManagerSubsystem>();
+			if (SM)
+			{
+				SM->PlaySoundAtLocation(ESoundType::Reload, GetActorLocation());
+			}
 		}
 	}
 	
