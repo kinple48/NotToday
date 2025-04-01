@@ -235,4 +235,9 @@ public:
 	float FlippedEaseOutBounce( float x );
 	void ApplyBouncingEffect( AActor* TargetActor , FVector SpawnLocation , float BounceHeight , float Duration );
 	
+	UPROPERTY( EditDefaultsOnly , Category = Input )
+	class UInputAction* IA_HiddenGame;
+	void HiddenGame( const struct FInputActionValue& InputValue );
+
+	bool hiddengamecheck = true;
 };

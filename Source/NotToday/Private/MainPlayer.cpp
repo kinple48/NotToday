@@ -152,6 +152,12 @@ AMainPlayer::AMainPlayer()
 		IA_Object = TempIA_Object.Object;
 	}
 
+	ConstructorHelpers::FObjectFinder<UInputAction>TempIA_HiddenGame( TEXT( "/Script/EnhancedInput.InputAction'/Game/LJW/Input/IA_HiddenGame.IA_HiddenGame'" ) );
+	if (TempIA_HiddenGame.Succeeded())
+	{
+		IA_HiddenGame = TempIA_HiddenGame.Object;
+	}
+
 }
 
 void AMainPlayer::BeginPlay()
@@ -245,6 +251,7 @@ void AMainPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		InputSystem->BindAction( IA_Place , ETriggerEvent::Started , this , &AMainPlayer::Place );
 		InputSystem->BindAction( IA_Remove , ETriggerEvent::Started , this , &AMainPlayer::Remove );
 		InputSystem->BindAction( IA_Object , ETriggerEvent::Started , this , &AMainPlayer::Object );
+		InputSystem->BindAction( IA_HiddenGame , ETriggerEvent::Started , this , &AMainPlayer::HiddenGame );
 	}
 }
 
@@ -995,4 +1002,40 @@ void AMainPlayer::ApplyBouncingEffect( AActor* TargetActor , FVector Location , 
 		TargetActor->SetActorLocation( NewLocation );
 
 	} , 0.016f , true );
+}
+
+void AMainPlayer::HiddenGame( const struct FInputActionValue& InputValue )
+{
+	GEngine->AddOnScreenDebugMessage( -1 , 5.f , FColor::Black , TEXT( "hiddengame" ));
+	TArray<AActor*> ActorWithTag;
+	FName TagToSearch = TEXT( "SpawnPoint" );
+
+	UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , ActorWithTag );
+
+	for (AActor* Actor : ActorWithTag)
+	{
+		if (Actor)
+		{
+			auto Object = Cast<ASpawnPoint>( Actor );
+			if (Object)
+			{
+				if (hiddengamecheck)
+				{
+					Object->boxcomp->SetHiddenInGame( true );
+				}
+				else
+				{
+					Object->boxcomp->SetHiddenInGame( false );
+				}
+			}
+		}
+	}
+	if (hiddengamecheck)
+	{
+		hiddengamecheck = false;
+	}
+	else
+	{
+		hiddengamecheck = true;
+	}
 }
