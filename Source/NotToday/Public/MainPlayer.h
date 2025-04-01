@@ -240,4 +240,5 @@ public:
 	void HiddenGame( const struct FInputActionValue& InputValue );
 
 	bool hiddengamecheck = true;
+	bool bIsReloading = false;
 };

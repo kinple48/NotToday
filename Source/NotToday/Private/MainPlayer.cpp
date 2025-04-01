@@ -201,17 +201,38 @@ void AMainPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	//if (CombatState)
+	//{
+	//	//RotateToMouseCursor();
+	//	DrawCrossHair();
+	//	CurrentTime += DeltaTime;
+	//	if (bGunShot && Reload > 0 && CurrentTime >= MakeTime)
+	//	{
+	//		GunShot();
+	//		CurrentTime = 0.f;
+	//	}
+	//	else if (Reload <= 0 && CurrentTime >= ReloadTime)
+	//	{
+	//		Reload = ReloadMax;
+	//		GameMode->SetReload( Reload , ReloadMax );
+	//		CurrentTime = 0.f;
+	//	}
+	//}
+
 	if (CombatState)
 	{
-		//RotateToMouseCursor();
 		DrawCrossHair();
 		CurrentTime += DeltaTime;
-		if (bGunShot && Reload > 0 && CurrentTime >= MakeTime)
+		if (Reload > 0)
 		{
-			GunShot();
-			CurrentTime = 0.f;
+			if (bGunShot && CurrentTime >= MakeTime)
+			{
+				Reload -= 1;
+				GunShot();
+				CurrentTime = 0.f;
+			}
 		}
-		else if (Reload <= 0 && CurrentTime >= ReloadTime)
+		else
 		{
 			Reload = ReloadMax;
 			GameMode->SetReload( Reload , ReloadMax );
@@ -223,8 +244,14 @@ void AMainPlayer::Tick(float DeltaTime)
 			{
 				SM->PlaySoundAtLocation(ESoundType::Reload, GetActorLocation());
 			}
+
+			if (CurrentTime >= ReloadTime)
+			{
+				Reload = ReloadMax;
+				GameMode->SetReload( Reload , ReloadMax );
+				CurrentTime = 0.f;
+			}
 		}
-	}
 	
 	
 	//Direction = FTransform( GetControlRotation() ).TransformVector( Direction );
@@ -307,7 +334,6 @@ void AMainPlayer::GunShotStart(const struct FInputActionValue& InputValue)
 void AMainPlayer::GunShotEnd(const struct FInputActionValue& InputValue)
 {
 	bGunShot = false;
-	CurrentTime = 1.f;
 }
 
 void AMainPlayer::GunShot()
@@ -602,7 +628,7 @@ void AMainPlayer::SetDamage( int32 damage )
 
 void AMainPlayer::SetReload( )
 {
-	Reload -= 1;
+	//Reload -= 1;
 	if (GameMode)
 	{
 		GameMode->SetReload( Reload , ReloadMax );
@@ -1026,7 +1052,7 @@ void AMainPlayer::ApplyBouncingEffect( AActor* TargetActor , FVector Location , 
 
 void AMainPlayer::HiddenGame( const struct FInputActionValue& InputValue )
 {
-	GEngine->AddOnScreenDebugMessage( -1 , 5.f , FColor::Black , TEXT( "hiddengame" ));
+	//GEngine->AddOnScreenDebugMessage( -1 , 5.f , FColor::Black , TEXT( "hiddengame" ));
 	TArray<AActor*> ActorWithTag;
 	FName TagToSearch = TEXT( "SpawnPoint" );
 
