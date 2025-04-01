@@ -110,7 +110,7 @@ void AMainGameStateBase::PlayWaveStartSound()
 
 void AMainGameStateBase::ItemMagnet()
 {
-	ItemElapsedTime += 0.03f;
+	ItemElapsedTime += 0.02f;
     float Alpha = FMath::Clamp(ItemElapsedTime / ItemMagnetDuration, 0.0f, 1.0f);
 	bool bItemExist = false;
 	// 모든 아이템들이 플레이어를 향해 날아오도록 한다.
@@ -143,7 +143,7 @@ void AMainGameStateBase::CheckLeftZombieCount()
 		
 		// 모든 아이템을 플레이어가 먹도록 유도하기
 		GetWorld()->GetTimerManager().SetTimer(ItemMagnetTimerHandle, this, &AMainGameStateBase::ItemMagnet,
-			0.03f, true);
+			0.02f, true);
 
 		// 낮으로 전환시키기!
 		SetDayNightState(EDayNightState::Day);

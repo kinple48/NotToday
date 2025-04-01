@@ -587,6 +587,16 @@ void AMainPlayer::SetDamage( int32 damage )
 			APlayerController* playercontroller = GetWorld()->GetFirstPlayerController();
 			playercontroller->GetPawn()->DisableInput( playercontroller );
 		}
+
+		// 좀비의 공격 타겟팅 Ignore
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_ZombieTarget, ECR_Ignore);
+        GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_ZombieHitBox, ECR_Ignore);
+
+		// 일정시간 후 게임 종료
+		FTimerHandle GameQuitTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(GameQuitTimerHandle,
+			[this]() {GameMode->EndGame();},
+			5.f, false);
 	}
 }
 

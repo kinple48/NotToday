@@ -45,15 +45,11 @@ public:
 	void ZombieKilled(AZombieBase* Zombie);
 
 protected:
-
-	
 	virtual void BeginPlay() override;
 	
 private:
 	UPROPERTY(VisibleAnywhere)
 	EDayNightState State;
-
-	void StartCheckAllKillLoop(float Rate);
 	
 	FTimerHandle CheckAllKillTimerHandle; // 좀비가 모두 죽을 때까지 계속해서 확인한다.
 	
