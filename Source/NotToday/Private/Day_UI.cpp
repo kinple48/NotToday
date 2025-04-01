@@ -11,6 +11,10 @@
 #include "Components/BoxComponent.h"
 #include "DefenseTower.h"
 #include "MainGameStateBase.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Components/TextBlock.h"
+#include "Components/PanelSlot.h"
 
 void UDay_UI::NativeConstruct()
 {
@@ -20,8 +24,7 @@ void UDay_UI::NativeConstruct()
 	Button_Buy->OnClicked.AddDynamic( this , &UDay_UI::Buy );
 	Button_Place->OnClicked.AddDynamic( this , &UDay_UI::Place );
 	Button_NextLevel->OnClicked.AddDynamic( this , &UDay_UI::NextLevel );
-	Button_WoodenBarricade->OnClicked.AddDynamic( this , &UDay_UI::WoodenBarricade );
-	Button_AutoTurret->OnClicked.AddDynamic( this , &UDay_UI::AutoTurret );
+	
 }
 
 void UDay_UI::Place()
@@ -116,74 +119,74 @@ void UDay_UI::NextLevel()
 	}
 }
 
-void UDay_UI::WoodenBarricade()
+void UDay_UI::AnimateTextBoxPositions( float Duration , bool bMoveLeft )
 {
-	//ObjectType = true;
-	//UStaticMesh* Mesh = LoadObject<UStaticMesh>( nullptr , TEXT( "/Script/Engine.StaticMesh'/Game/LJW/Asset/Barricade/source/SM_Barricade.SM_Barricade'" ) );
-	//player->StoreData = player->BarricadeStoreData;
-	//player->Price = player->BarricadePrice;
-	//GameMode->PrintStore();
-	//GameMode->PrintPrice();
+	if (!BarricadeText || !TurretText) return;
 
-	//TArray<AActor*> FoundActors;
-	//FName TagToSearch = TEXT( "SpawnPoint" ); // 검색할 태그 이름
+	if (GetWorld()->GetTimerManager().IsTimerActive( TimerHandle )) {
+		GetWorld()->GetTimerManager().ClearTimer( TimerHandle );
+	}
 
-	//// 액터 검색
-	//UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , FoundActors );
-	//for (AActor* Actors : FoundActors)
-	//{
-	//	auto barricade = Cast<ASpawnPoint>( Actors );
-	//	if (barricade)
-	//	{
-	//		barricade->meshcomp->SetStaticMesh( Mesh );
+	// 초기 및 목표 위치 정의
+	FVector2D BarricadeStart = bMoveLeft ? FVector2D( 0.5f , -0.5f ) : FVector2D( -1.5f , -0.5f );
+	FVector2D BarricadeEnd = bMoveLeft ? FVector2D( -1.5f , -0.5f ) : FVector2D( 0.5f , -0.5f );
 
-	//		player->SpawnLocation = FVector( 0.f , 0.f , 70.f );
-	//		player->SpawnRotation = FRotator( 0.f , 90.f , 0.f );
-	//		player->SpawnScale = FVector( 0.5 , 0.3 , 0.5 );
+	FVector2D TurretStart = bMoveLeft ? FVector2D( -1.5f , -0.5f ) : FVector2D( 0.5f , -0.5f );
+	FVector2D TurretEnd = bMoveLeft ? FVector2D( 0.5f , -0.5f ) : FVector2D( -1.5f , -0.5f );
 
-	//		if (player->Spawnpoint)
-	//		{
-	//			player->Spawnpoint->meshcomp->SetWorldLocation( player->Spawnpoint->GetActorLocation() - player->SpawnLocation );
-	//			player->Spawnpoint->meshcomp->SetWorldRotation( player->SpawnRotation );
-	//			player->Spawnpoint->meshcomp->SetRelativeScale3D( player->SpawnScale );
-	//		}
-	//	}
-	//}
+	// 애니메이션 타이머 설정
+	float TimeElapsed = 0.f;
+
+	GetWorld()->GetTimerManager().SetTimer( TimerHandle , [= , this]() mutable {
+		TimeElapsed += GetWorld()->GetDeltaSeconds();
+
+		// Alpha 값 계산
+		float Alpha = FMath::Clamp( TimeElapsed / Duration , 0.f , 1.f );
+		UE_LOG( LogTemp , Warning , TEXT( "Alpha: %f" ) , Alpha );
+
+		// Easing 함수 적용
+		float EasedAlpha = EaseOutQuint( Alpha );
+		UE_LOG( LogTemp , Warning , TEXT( "EasedAlpha: %f" ) , EasedAlpha );
+
+		// 텍스트 박스 위치 업데이트
+		UpdateTextBoxPosition( BarricadeText , BarricadeStart , BarricadeEnd , EasedAlpha );
+		UpdateTextBoxPosition( TurretText , TurretStart , TurretEnd , EasedAlpha );
+
+		// 애니메이션 종료 시 타이머 정지
+		if (Alpha >= 1.f) {
+			GetWorld()->GetTimerManager().ClearTimer( TimerHandle );
+			UE_LOG( LogTemp , Warning , TEXT( "Animation finished!" ) );
+		}
+} , 0.01f , true );
 }
 
-void UDay_UI::AutoTurret()
+void UDay_UI::UpdateTextBoxPosition( UTextBlock* TextBox , FVector2D StartPosition , FVector2D EndPosition , float Alpha )
 {
-	//ObjectType = false;
-	//GEngine->AddOnScreenDebugMessage( 0 , 0.5f , FColor::Red , TEXT( "AutoTurret" ) );
-	//UStaticMesh* Mesh = LoadObject<UStaticMesh>( nullptr , TEXT( "/Script/Engine.StaticMesh'/Game/LJW/Asset/defence-tower/source/StaticMesh.StaticMesh'" ) );
-	//
-	//player->StoreData = player->AutoTurretStoreData;
-	//player->Price = player->AutoTurretPrice;
-	//GameMode->PrintStore();
-	//GameMode->PrintPrice();
+	if (!TextBox || !TextBox->Slot) {
+		UE_LOG( LogTemp , Error , TEXT( "Invalid TextBox or Slot!" ) );
+		return;
+	}
 
-	//TArray<AActor*> FoundActors;
-	//FName TagToSearch = TEXT( "SpawnPoint" ); // 검색할 태그 이름
+	UCanvasPanelSlot* slot = Cast<UCanvasPanelSlot>( TextBox->Slot );
+	if (!slot) {
+		UE_LOG( LogTemp , Error , TEXT( "Failed to cast to UCanvasPanelSlot!" ) );
+		return;
+	}
 
-	//// 액터 검색
-	//UGameplayStatics::GetAllActorsWithTag( GetWorld() , TagToSearch , FoundActors );
-	//for (AActor* Actors : FoundActors)
-	//{
-	//	auto defensetower = Cast<ASpawnPoint>( Actors );
-	//	if (defensetower)
-	//	{
-	//		defensetower->meshcomp->SetStaticMesh( Mesh );
+	FVector2D NewAlignment;
+	NewAlignment.X = FMath::Lerp( StartPosition.X , EndPosition.X , Alpha );
+	NewAlignment.Y = FMath::Lerp( StartPosition.Y , EndPosition.Y , Alpha );
 
-	//		player->SpawnLocation = FVector( 0.f , 0.f , 30.f );
-	//		player->SpawnRotation = FRotator( 0.f , 90.f , 0.f );
-	//		player->SpawnScale = FVector( 0.3 , 0.2 , 0.3 );
+	// Alignment 업데이트
+	slot->SetAlignment( NewAlignment );
+	if (Alpha >= 1.f)
+	{
+		slot->SetAlignment( EndPosition );
+	}
+	UE_LOG( LogTemp , Warning , TEXT( "Updated Alignment: (%f, %f)" ) , NewAlignment.X , NewAlignment.Y );
+}
 
-	//		if (player->Spawnpoint)
-	//		{
-	//			player->Spawnpoint->meshcomp->SetWorldLocation( player->Spawnpoint->GetActorLocation() - player->SpawnLocation );
-	//			player->Spawnpoint->meshcomp->SetWorldRotation( player->SpawnRotation );
-	//			player->Spawnpoint->meshcomp->SetRelativeScale3D( player->SpawnScale );
-	//		}
-	//	}
-	//}
+float UDay_UI::EaseOutQuint( float x )
+{
+	return 1 - FMath::Pow( 1 - x , 5 );
 }
