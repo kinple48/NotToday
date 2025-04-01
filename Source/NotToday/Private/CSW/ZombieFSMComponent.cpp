@@ -214,7 +214,6 @@ void UZombieFSMComponent::AttackTick()
 	{
 		// 공격!
 		ElapsedTime = 0.f;
-		//GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Magenta, FString("Attack"));
 		Me->PlayAnimMontage(Anim->ZombieMontage, 1.f, TEXT("Attack"));
 		AIController->StopMovement();
 		bAttackPlaying = true;
@@ -224,16 +223,12 @@ void UZombieFSMComponent::AttackTick()
 		DistToTarget = FVector::Distance(Target->GetActorLocation(), Me->GetActorLocation());
 		if (DistToTarget > AttackRange + 10.f && !bAttackPlaying) // 공격범위 벗어남 && 공격중이 아님
 		{
-			PRINT_LOG(CSW, TEXT("DistToTarget > AttackRange + 10.f && !bAttackPlaying"));
 			UAnimInstance* AnimInstance = Me->GetMesh()->GetAnimInstance();
 			if (AnimInstance)
 			{
-				PRINT_LOG(CSW, TEXT("if (AnimInstance)"));
 				if (AnimInstance->Montage_IsPlaying(Anim->ZombieMontage))
 				{
-					PRINT_LOG(CSW, TEXT("Montage_IsPlaying"));
-					GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Yellow, TEXT("Montage_Stop"));
-					AnimInstance->Montage_Stop(0.15f, Anim->ZombieMontage);
+					AnimInstance->Montage_Stop(0.f, Anim->ZombieMontage);
 				};
 			}
 			
