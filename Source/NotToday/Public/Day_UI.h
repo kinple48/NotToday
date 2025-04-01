@@ -45,6 +45,12 @@ public:
 	UPROPERTY(EditAnywhere, meta=(BindWidget))
 	class UTextBlock* NextLevelText;
 
+	UPROPERTY(EditAnywhere, meta=(BindWidget))
+	class UTextBlock* BarricadeText;
+
+	UPROPERTY(EditAnywhere, meta=(BindWidget))
+	class UTextBlock* TurretText;
+
 	//UPROPERTY(EditAnywhere, meta=(BindWidget))
 	//class UTextBlock* Remove;
 
@@ -57,11 +63,6 @@ public:
 	UPROPERTY(EditAnywhere, meta=(BindWidget))
 	class UButton* Button_NextLevel;
 
-	UPROPERTY(EditAnywhere, meta=(BindWidget))
-	class UButton* Button_WoodenBarricade;
-
-	UPROPERTY(EditAnywhere, meta=(BindWidget))
-	class UButton* Button_AutoTurret;
 
 	UFUNCTION()
 	void Place();
@@ -74,14 +75,17 @@ public:
 	UFUNCTION()
 	void NextLevel();
 
-	UFUNCTION()
-	void WoodenBarricade();
-
-	UFUNCTION()
-	void AutoTurret();
-
 	class AMainPlayer* player;
 	class AMainGameModeBase* GameMode;
 
 	bool ObjectType = true;
+
+public:
+	void AnimateTextBoxPositions( float Duration , bool bMoveLeft );
+
+	void UpdateTextBoxPosition( UTextBlock* TextBox , FVector2D StartPosition , FVector2D EndPosition , float Alpha );
+	
+	float EaseOutQuint( float x );
+
+	FTimerHandle TimerHandle;
 };

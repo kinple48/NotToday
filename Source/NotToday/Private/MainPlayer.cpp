@@ -906,18 +906,39 @@ void AMainPlayer::AutoTurret()
 
 void AMainPlayer::Object( const struct FInputActionValue& InputValue )
 {
-	if (!CombatState)
+	/*if (!CombatState)
 	{
 		if (ObjectType)
 		{
 			AutoTurret();
+			if (UDay_UI* WidgetInstance = Cast<UDay_UI>( WidgetComp->GetUserWidgetObject() )) {
+				WidgetInstance->AnimateTextBoxPositions( 1.0f, true );
+			}
 		}
 
 		else if(!ObjectType)
 		{
 			WoodenBarricade();
+			if (UDay_UI* WidgetInstance = Cast<UDay_UI>( WidgetComp->GetUserWidgetObject() )) {
+				WidgetInstance->AnimateTextBoxPositions( 1.0f, false );
+			}
+		}
+	}*/
+
+	
+	if (!CombatState && WidgetComp) { // WidgetComp 유효성 검사 추가
+		if (UDay_UI* WidgetInstance = Cast<UDay_UI>( WidgetComp->GetUserWidgetObject() )) {
+			if (ObjectType) {
+				AutoTurret();
+				WidgetInstance->AnimateTextBoxPositions( 1.0f , true );
+			}
+			else {
+				WoodenBarricade();
+				WidgetInstance->AnimateTextBoxPositions( 1.0f , false );
+			}
 		}
 	}
+	
 }
 
 float AMainPlayer::EaseOutBounce( float x )
